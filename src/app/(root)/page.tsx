@@ -20,7 +20,7 @@ interface ApiResponse {
 
 async function fetchMoviesData(page: number = 1): Promise<ApiResponse | null> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
     const res = await fetch(`${baseUrl}/api/phim-moi-cap-nhat?page=${page}`, {
       cache: "no-store",
       headers: {
