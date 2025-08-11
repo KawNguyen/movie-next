@@ -115,3 +115,56 @@ export interface Country {
   name: string;
   slug: string;
 }
+
+// Search API Types
+export interface SearchParams {
+  keyword: string;
+  page?: number;
+  sort_field?: "time" | "name" | "year" | "view";
+  sort_type?: "desc" | "asc";
+  sort_lang?: "cn" | "en" | "kr" | "th";
+  category?: string;
+  country?: string;
+  year?: number;
+  limit?: number;
+}
+
+export interface SearchApiResponse {
+  status: boolean;
+  msg: string;
+  data?: {
+    seoOnPage: {
+      og_type: string;
+      titleHead: string;
+      descriptionHead: string;
+      og_image: string[];
+      og_url: string;
+    };
+    breadCrumb: Array<{
+      name: string;
+      slug?: string;
+      isCurrent: boolean;
+      position: number;
+    }>;
+    titlePage: string;
+    items: MovieItem[];
+    params: {
+      type_slug: string;
+      filterCategory: string[];
+      filterCountry: string[];
+      filterYear: string[];
+      filterType: string[];
+      sortField: string;
+      sortType: string;
+      pagination: {
+        totalItems: number;
+        totalItemsPerPage: number;
+        currentPage: number;
+        totalPages: number;
+      };
+    };
+    type_list: string;
+    APP_DOMAIN_FRONTEND: string;
+    APP_DOMAIN_CDN_IMAGE: string;
+  };
+}

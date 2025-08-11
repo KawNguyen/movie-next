@@ -27,7 +27,6 @@ type BreadcrumbItemType = {
   url: string;
 };
 
-// Tạo Map lookup nhanh
 function createRouteMap(navItems: NavItem[]): Map<string, string> {
   const routeMap = new Map<string, string>();
 
@@ -46,7 +45,6 @@ function createRouteMap(navItems: NavItem[]): Map<string, string> {
   return routeMap;
 }
 
-// Format slug thành tiêu đề
 function formatTitle(slug: string): string {
   const specialCases: Record<string, string> = {
     "top-imdb": "Top IMDb",
@@ -74,9 +72,7 @@ function getBreadcrumbs(pathname: string): BreadcrumbItemType[] {
     ...(data.navSecondary as NavItem[]),
   ]);
 
-  const breadcrumbs: BreadcrumbItemType[] = [
-    { title: "Trang chủ", url: "/" }, // Home luôn ở đầu
-  ];
+  const breadcrumbs: BreadcrumbItemType[] = [{ title: "Trang chủ", url: "/" }];
 
   if (pathname === "/") {
     return breadcrumbs;
@@ -103,17 +99,16 @@ export default function AppBreadcrumb() {
   const breadcrumbs = useMemo(() => getBreadcrumbs(pathname), [pathname]);
 
   return (
-    <Breadcrumb>
+    <Breadcrumb className="md:block hidden">
       <BreadcrumbList>
         {breadcrumbs.map((crumb, idx) => {
           const isLast = idx === breadcrumbs.length - 1;
-          const slug = crumb.url.split("/").filter(Boolean).pop(); // lấy slug cuối
+          const slug = crumb.url.split("/").filter(Boolean).pop();
 
           return (
             <React.Fragment key={crumb.url}>
               <BreadcrumbItem>
                 {isLast ? (
-                  // Endpoint cuối luôn là page text
                   <BreadcrumbPage className="font-bold">
                     {crumb.url === "/" ? (
                       <Home className="w-4 h-4" />
@@ -122,17 +117,17 @@ export default function AppBreadcrumb() {
                     )}
                   </BreadcrumbPage>
                 ) : crumb.url === "/" ? (
-                  // Home có link
                   <BreadcrumbLink asChild>
                     <Link href="/">
                       <Home className="w-4 h-4" />
                     </Link>
                   </BreadcrumbLink>
-                ) : (slug === "danh-muc" || slug === "phim" || slug === "the-loai" || slug === "quoc-gia") ? (
-                  // Danh mục chỉ là text, không link
+                ) : slug === "danh-muc" ||
+                  slug === "phim" ||
+                  slug === "the-loai" ||
+                  slug === "quoc-gia" ? (
                   <span>{crumb.title}</span>
                 ) : (
-                  // Các breadcrumb còn lại có link
                   <BreadcrumbLink asChild>
                     <Link href={crumb.url}>{crumb.title}</Link>
                   </BreadcrumbLink>

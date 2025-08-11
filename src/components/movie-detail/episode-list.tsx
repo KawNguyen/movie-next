@@ -54,19 +54,17 @@ export function EpisodeList({
   return (
     <Card className="overflow-hidden">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">Danh sách tập phim</CardTitle>
-          <CardDescription className="flex items-center gap-2 ">
-            <span>{movie.episode_total} tập</span>
-            <span>•</span>
-            <Badge
-              variant={movie.status === "completed" ? "default" : "secondary"}
-              className="text-xs"
-            >
-              {movie.status === "completed" ? "Hoàn thành" : "Đang cập nhật"}
-            </Badge>
-          </CardDescription>
-        </div>
+        <CardTitle className="text-lg">Danh sách tập phim</CardTitle>
+        <CardDescription className="flex items-center gap-2 text-sm">
+          <span>{movie.episode_total} tập</span>
+          <span>•</span>
+          <Badge
+            variant={movie.status === "completed" ? "default" : "secondary"}
+            className="text-xs"
+          >
+            {movie.status === "completed" ? "Hoàn thành" : "Đang cập nhật"}
+          </Badge>
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="0" className="w-full">

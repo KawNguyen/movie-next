@@ -1,4 +1,5 @@
 import { SimpleThemeToggle } from "@/components/mode-toggle";
+import { SearchMobile } from "@/components/search";
 import AppBreadcrumb from "@/components/sidebar/app-breadcrumb";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
 
@@ -21,7 +22,10 @@ const Layout = ({ children }: { children: ReactNode }) => {
             <Separator className="mr-2 data-[orientation=vertical]:h-4" />
             <AppBreadcrumb />
           </div>
-          <SimpleThemeToggle />
+          <div className="flex items-center gap-2">
+            <SearchMobile />
+            <SimpleThemeToggle />
+          </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>
       </SidebarInset>

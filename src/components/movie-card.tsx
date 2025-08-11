@@ -44,11 +44,11 @@ const MovieCard = ({
             </Badge>
           </AspectRatio>
         </CardHeader>
-        <CardContent className="p-4">
-          <h3 className="font-semibold text-lg mb-2 line-clamp-1 overflow-hidden text-ellipsis group-hover:text-primary transition-colors">
+        <CardContent className="p-2 sm:p-3 text-center sm:text-left">
+          <h3 className="font-semibold text-md md:text-lg mb-2 line-clamp-1 overflow-hidden text-ellipsis group-hover:text-primary transition-colors">
             {name}
           </h3>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
+          <div className="hidden sm:flex items-center gap-4 text-sm text-muted-foreground mb-2 ">
             <div className="flex items-center gap-1">
               <Calendar className="w-4 h-4" />
               {year}
@@ -58,7 +58,7 @@ const MovieCard = ({
               {time}
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="hidden sm:flex flex-wrap gap-2">
             {category.slice(0, 2).map((cat) => (
               <Badge key={cat.id} variant="secondary" className="text-xs">
                 {cat.name}

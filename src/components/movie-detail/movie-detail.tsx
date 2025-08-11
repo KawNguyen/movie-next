@@ -16,6 +16,7 @@ import {
   EpisodeListSkeleton,
   MovieStatsSkeleton,
 } from "./skeletons";
+import Image from "next/image";
 
 interface MovieDetailProps {
   slug: string;
@@ -130,36 +131,48 @@ export default function MovieDetail({ slug, initialData }: MovieDetailProps) {
   const { movie, episodes } = movieData;
 
   return (
-    <div className="min-h-screen bg-background">
-      <MovieHero movie={movie} />
+    <div className="relative">
+      <div className="absolute inset-0 h-[60vh]">
+        <Image
+          src={movie.thumb_url || "/placeholder.svg"}
+          alt={movie.name}
+          fill
+          className="object-cover rounded-lg w-full h-[60vh] max-h-[66vh]"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
+      </div>
+      <div className="relative space-y-8 pt-8">
+        <MovieHero movie={movie} />
 
-      <div className="max-w-7xl mx-auto ">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8">
-          <div className="grid gap-8">
-            {selectedEpisode && (
-              <VideoPlayer
-                selectedEpisode={selectedEpisode}
-                selectedServer={episodes[selectedServer]}
-              />
-            )}
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8">
+            <div className="grid gap-8">
+              {selectedEpisode && (
+                <VideoPlayer
+                  selectedEpisode={selectedEpisode}
+                  selectedServer={episodes[selectedServer]}
+                />
+              )}
 
-            <MovieInfo movie={movie} />
+              <MovieInfo movie={movie} />
 
-            <CastCrew movie={movie} />
-          </div>
+              <CastCrew movie={movie} />
+            </div>
 
-          <div className="grid gap-8">
-            {selectedEpisode && (
-              <EpisodeList
-                movie={movie}
-                episodes={episodes}
-                selectedEpisode={selectedEpisode}
-                selectedServer={selectedServer}
-                onEpisodeSelect={handleEpisodeSelect}
-              />
-            )}
+            <div className="grid gap-8">
+              {selectedEpisode && (
+                <EpisodeList
+                  movie={movie}
+                  episodes={episodes}
+                  selectedEpisode={selectedEpisode}
+                  selectedServer={selectedServer}
+                  onEpisodeSelect={handleEpisodeSelect}
+                />
+              )}
 
-            <MovieStats movie={movie} />
+              <MovieStats movie={movie} />
+            </div>
           </div>
         </div>
       </div>
