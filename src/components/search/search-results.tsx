@@ -5,7 +5,6 @@ import { SearchApiResponse, MovieItem } from "@/types/movie-list.types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { SearchCardItem } from "./search-card-item";
 
 interface SearchResultsProps {
@@ -155,14 +154,17 @@ export function SearchResults({
         {loading && allMovies.length === 0 && (
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
-              <Card key={i} className="flex space-x-3 p-3">
+              <div
+                key={i}
+                className="flex space-x-3 p-3 bg-primary-foreground rounded-md border-primary"
+              >
                 <Skeleton className="h-20 w-16 rounded" />
                 <div className="space-y-2 flex-1">
                   <Skeleton className="h-4 w-3/4" />
                   <Skeleton className="h-3 w-1/2" />
                   <Skeleton className="h-3 w-1/4" />
                 </div>
-              </Card>
+              </div>
             ))}
           </div>
         )}
