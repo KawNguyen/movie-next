@@ -38,31 +38,56 @@ export default function MovieDetail({ slug, initialData }: MovieDetailProps) {
     if (!movieData?.episodes || movieData.episodes.length === 0) return;
 
     const tapParam = searchParams.get("tap");
+    const serverParam = searchParams.get("server");
+
+    // Helper function để tìm server index từ server param
+    const getServerIndexFromParam = (serverParam: string) => {
+      return movieData.episodes.findIndex((server) => {
+        const serverName = server.server_name.toLowerCase();
+        if (serverParam === "vietsub" && serverName.includes("vietsub")) {
+          return true;
+        }
+        if (
+          serverParam === "thuyet-minh" &&
+          (serverName.includes("lồng tiếng") ||
+            serverName.includes("thuyết minh"))
+        ) {
+          return true;
+        }
+        return false;
+      });
+    };
+
+    // Xác định server index
+    let targetServerIndex = 0;
+    if (serverParam) {
+      const foundServerIndex = getServerIndexFromParam(serverParam);
+      if (foundServerIndex >= 0) {
+        targetServerIndex = foundServerIndex;
+      }
+    }
 
     if (tapParam) {
       const tapNumber = parseInt(tapParam);
       if (!isNaN(tapNumber) && tapNumber > 0) {
-        for (
-          let serverIndex = 0;
-          serverIndex < movieData.episodes.length;
-          serverIndex++
-        ) {
-          const server = movieData.episodes[serverIndex];
-          if (server.server_data && server.server_data.length >= tapNumber) {
-            const episode = server.server_data[tapNumber - 1];
-            if (episode) {
-              setSelectedEpisode(episode);
-              setSelectedServer(serverIndex);
-              return;
-            }
+        const server = movieData.episodes[targetServerIndex];
+        if (server?.server_data && server.server_data.length >= tapNumber) {
+          const episode = server.server_data[tapNumber - 1];
+          if (episode) {
+            setSelectedEpisode(episode);
+            setSelectedServer(targetServerIndex);
+            return;
           }
         }
       }
     }
 
-    if (movieData.episodes[0]?.server_data?.[0]) {
-      setSelectedEpisode(movieData.episodes[0].server_data[0]);
-      setSelectedServer(0);
+    // Fallback: chọn tập đầu tiên của server được chỉ định hoặc server đầu tiên
+    const defaultServer =
+      movieData.episodes[targetServerIndex] || movieData.episodes[0];
+    if (defaultServer?.server_data?.[0]) {
+      setSelectedEpisode(defaultServer.server_data[0]);
+      setSelectedServer(targetServerIndex);
     }
   }, [movieData, searchParams]);
 
