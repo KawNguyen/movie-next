@@ -99,8 +99,6 @@ export async function generateMetadata({
   };
 
   const countryName = countryMap[resolvedParams.slug] || "Quốc Gia";
-
-  // Fetch data để có thêm thông tin cho metadata
   const countryData = await fetchCountryData(resolvedParams.slug);
   const totalItems = countryData?.pagination?.totalItems || 0;
 

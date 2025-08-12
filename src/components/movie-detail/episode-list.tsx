@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Episode, Movie, Server } from "@/types/movie-detail.types";
 import { Headphones, Subtitles, Play } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
 
 interface EpisodeListProps {
   movie: Movie;
@@ -33,6 +34,7 @@ export function EpisodeList({
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentTap = searchParams.get("tap");
+  const [isChanging, setIsChanging] = useState(false);
 
   const getServerDisplayName = (serverName: string) => {
     if (serverName.toLowerCase().includes("vietsub")) {
@@ -102,21 +104,28 @@ export function EpisodeList({
                         key={episodeIndex}
                         variant={isSelected ? "default" : "outline"}
                         size="sm"
+                        disabled={isChanging || isSelected}
                         className={`
                           h-10 p-2 text-xs font-medium transition-all duration-200
                           ${
                             isSelected
                               ? "bg-primary text-primary-foreground shadow-md"
-                              : "hover:bg-muted hover:scale-105"
+                              : "hover:bg-muted"
                           }
+                          ${isChanging ? "opacity-50 cursor-not-allowed" : ""}
                         `}
                         onClick={() => {
+                          if (isChanging) return;
+
+                          setIsChanging(true);
                           const params = new URLSearchParams(
                             searchParams.toString()
                           );
                           params.set("tap", tapNumber.toString());
                           router.push(`?${params.toString()}`);
                           onEpisodeSelect(episode, serverIndex);
+
+                          setTimeout(() => setIsChanging(false), 300);
                         }}
                       >
                         <span className="truncate">{episode.name}</span>

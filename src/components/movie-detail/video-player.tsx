@@ -21,6 +21,7 @@ export function VideoPlayer({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [canPlay, setCanPlay] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -31,18 +32,18 @@ export function VideoPlayer({
     )
       return;
 
+    setIsTransitioning(true);
+
     // Reset states
     setIsLoading(true);
     setError(null);
     setCanPlay(false);
 
-    // Cleanup previous HLS instance
     if (hlsRef.current) {
       hlsRef.current.destroy();
       hlsRef.current = null;
     }
 
-    // Find the current episode in server_data
     const currentEpisodeData = selectedServer.server_data.find(
       (ep) => ep.slug === selectedEpisode.slug
     );
@@ -55,7 +56,6 @@ export function VideoPlayer({
 
     const videoSrc = currentEpisodeData.link_m3u8;
 
-    // Check if HLS is supported
     if (Hls.isSupported()) {
       const hls = new Hls({
         enableWorker: true,
@@ -71,6 +71,7 @@ export function VideoPlayer({
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         setIsLoading(false);
         setCanPlay(true);
+        setIsTransitioning(false);
       });
 
       hls.on(Hls.Events.ERROR, (event, data) => {
@@ -78,6 +79,7 @@ export function VideoPlayer({
         if (data.fatal) {
           setError("Không thể tải video. Vui lòng thử server khác.");
           setIsLoading(false);
+          setIsTransitioning(false);
         }
       });
     } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
@@ -86,14 +88,17 @@ export function VideoPlayer({
       video.addEventListener("loadedmetadata", () => {
         setIsLoading(false);
         setCanPlay(true);
+        setIsTransitioning(false);
       });
       video.addEventListener("error", () => {
         setError("Không thể tải video. Vui lòng thử server khác.");
         setIsLoading(false);
+        setIsTransitioning(false);
       });
     } else {
       setError("Trình duyệt không hỗ trợ phát video HLS.");
       setIsLoading(false);
+      setIsTransitioning(false);
     }
 
     return () => {
@@ -136,23 +141,29 @@ export function VideoPlayer({
             <>
               <video
                 ref={videoRef}
-                className="w-full h-full"
-                controls={canPlay}
+                className={`w-full h-full transition-opacity duration-300 ${
+                  isTransitioning ? "opacity-50" : "opacity-100"
+                }`}
+                controls={canPlay && !isTransitioning}
                 preload="metadata"
                 crossOrigin="anonymous"
                 playsInline
               />
 
-              {isLoading && (
-                <div className="absolute inset-0 flex items-center justify-center text-center text-white bg-black/50">
+              {(isLoading || isTransitioning) && (
+                <div className="absolute inset-0 flex items-center justify-center text-center text-white bg-black/50 transition-opacity duration-200">
                   <div>
                     <Loader2 className="w-16 h-16 mx-auto mb-4 opacity-50 animate-spin" />
-                    <p className="text-lg">Đang tải video...</p>
+                    <p className="text-lg">
+                      {isTransitioning
+                        ? "Đang chuyển tập..."
+                        : "Đang tải video..."}
+                    </p>
                   </div>
                 </div>
               )}
 
-              {!isLoading && !canPlay && !error && (
+              {!isLoading && !canPlay && !error && !isTransitioning && (
                 <div
                   className="absolute inset-0 flex items-center justify-center text-center text-white bg-black/50 cursor-pointer"
                   onClick={handlePlay}

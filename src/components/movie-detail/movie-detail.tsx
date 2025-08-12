@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { MovieHero } from "./movie-hero";
 import { VideoPlayer } from "./video-player";
 import { MovieInfo } from "./movie-info";
@@ -24,6 +25,7 @@ interface MovieDetailProps {
 }
 
 export default function MovieDetail({ slug, initialData }: MovieDetailProps) {
+  const searchParams = useSearchParams();
   const [movieData, setMovieData] = useState<MovieDetailResponse | null>(
     initialData || null
   );
@@ -33,19 +35,42 @@ export default function MovieDetail({ slug, initialData }: MovieDetailProps) {
   const [selectedServer, setSelectedServer] = useState(0);
 
   useEffect(() => {
+    if (!movieData?.episodes || movieData.episodes.length === 0) return;
+
+    const tapParam = searchParams.get("tap");
+
+    if (tapParam) {
+      const tapNumber = parseInt(tapParam);
+      if (!isNaN(tapNumber) && tapNumber > 0) {
+        for (
+          let serverIndex = 0;
+          serverIndex < movieData.episodes.length;
+          serverIndex++
+        ) {
+          const server = movieData.episodes[serverIndex];
+          if (server.server_data && server.server_data.length >= tapNumber) {
+            const episode = server.server_data[tapNumber - 1];
+            if (episode) {
+              setSelectedEpisode(episode);
+              setSelectedServer(serverIndex);
+              return;
+            }
+          }
+        }
+      }
+    }
+
+    if (movieData.episodes[0]?.server_data?.[0]) {
+      setSelectedEpisode(movieData.episodes[0].server_data[0]);
+      setSelectedServer(0);
+    }
+  }, [movieData, searchParams]);
+
+  useEffect(() => {
     if (initialData && initialData.status === true && initialData.movie) {
       setMovieData(initialData);
       setLoading(false);
       setError(null);
-
-      if (
-        initialData.episodes &&
-        initialData.episodes.length > 0 &&
-        initialData.episodes[0].server_data &&
-        initialData.episodes[0].server_data.length > 0
-      ) {
-        setSelectedEpisode(initialData.episodes[0].server_data[0]);
-      }
       return;
     }
 
@@ -63,14 +88,6 @@ export default function MovieDetail({ slug, initialData }: MovieDetailProps) {
 
         if (data.status === true && data.movie) {
           setMovieData(data);
-          if (
-            data.episodes &&
-            data.episodes.length > 0 &&
-            data.episodes[0].server_data &&
-            data.episodes[0].server_data.length > 0
-          ) {
-            setSelectedEpisode(data.episodes[0].server_data[0]);
-          }
         } else {
           throw new Error(data.msg || "Failed to load movie data");
         }
@@ -88,7 +105,8 @@ export default function MovieDetail({ slug, initialData }: MovieDetailProps) {
   }, [slug, initialData]);
 
   const handleEpisodeSelect = (episode: Episode, serverIndex: number) => {
-    setSelectedEpisode(episode);
+    // The episode selection will be handled by the useEffect that watches searchParams
+    // This function is kept for compatibility with EpisodeList component
     setSelectedServer(serverIndex);
   };
 
@@ -150,6 +168,7 @@ export default function MovieDetail({ slug, initialData }: MovieDetailProps) {
             <div className="grid gap-8">
               {selectedEpisode && (
                 <VideoPlayer
+                  key={`${selectedEpisode.slug}-${selectedServer}`}
                   selectedEpisode={selectedEpisode}
                   selectedServer={episodes[selectedServer]}
                 />

@@ -5,7 +5,6 @@ interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-// Server-side fetch function
 async function fetchCategoryData(slug: string, page: number = 1) {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
@@ -32,13 +31,11 @@ export default async function Page({ params, searchParams }: PageProps) {
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
 
-  // Get page number from searchParams
   const page =
     typeof resolvedSearchParams.page === "string"
       ? parseInt(resolvedSearchParams.page, 10)
       : 1;
 
-  // Fetch data trên server
   const categoryData = await fetchCategoryData(resolvedParams.slug, page);
 
   return (
@@ -70,7 +67,6 @@ export async function generateMetadata({
 
   const title = titleMap[resolvedParams.slug] || "Danh Mục Phim";
 
-  // Fetch data để có thêm thông tin cho metadata
   const categoryData = await fetchCategoryData(resolvedParams.slug);
   const totalItems = categoryData?.pagination?.totalItems || 0;
 

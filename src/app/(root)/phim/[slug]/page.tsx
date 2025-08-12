@@ -37,7 +37,6 @@ export async function generateMetadata({
 }) {
   const { slug } = await params;
 
-  // Sử dụng cùng function fetch
   const data = await fetchMovieData(slug);
 
   if (!data || !data.movie) {
