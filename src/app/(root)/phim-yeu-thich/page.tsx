@@ -8,7 +8,7 @@ export default function FavoritesPage() {
   );
 }
 
-export async function generateMetaData() {
+export async function generateMetadata() {
   return {
     title: "Phim Yêu Thích",
     description: "Danh sách phim yêu thích của bạn",
