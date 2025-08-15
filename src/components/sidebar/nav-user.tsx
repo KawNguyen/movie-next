@@ -6,13 +6,19 @@ import {
   ChevronsUpDown,
   CreditCard,
   LogOut,
-  Sparkles,
   Sun,
   Moon,
   Monitor,
   Check,
+  User,
+  Heart,
+  History,
 } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useAuth } from "@/components/provider/auth-provider";
+import { signOut } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -31,17 +37,70 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-export function NavUser({
-  user,
-}: {
-  user: {
-    name: string;
-    email: string;
-    avatar: string;
-  };
-}) {
+export function NavUser() {
   const { isMobile } = useSidebar();
   const { setTheme, theme } = useTheme();
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            router.push("/");
+          },
+        },
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton size="lg">
+            <div className="h-8 w-8 rounded-lg bg-muted animate-pulse" />
+            <div className="grid flex-1 text-left text-sm leading-tight">
+              <div className="h-4 bg-muted rounded animate-pulse" />
+              <div className="h-3 bg-muted rounded animate-pulse mt-1" />
+            </div>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    );
+  }
+
+  // Show login button if not authenticated
+  if (!user) {
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <Link href="/login">
+            <SidebarMenuButton size="lg">
+              <User className="h-8 w-8" />
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-medium">Đăng nhập</span>
+                <span className="truncate text-xs">Truy cập tài khoản</span>
+              </div>
+            </SidebarMenuButton>
+          </Link>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    );
+  }
+
+  const getInitials = (name?: string, email?: string) => {
+    if (name) {
+      return name.charAt(0).toUpperCase();
+    }
+    if (email) {
+      return email.charAt(0).toUpperCase();
+    }
+    return "U";
+  };
 
   return (
     <SidebarMenu>
@@ -53,11 +112,15 @@ export function NavUser({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                <AvatarImage src={user.image || ""} alt={user.name || ""} />
+                <AvatarFallback className="rounded-lg">
+                  {getInitials(user.name, user.email)}
+                </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
+                <span className="truncate font-medium">
+                  {user.name || "User"}
+                </span>
                 <span className="truncate text-xs">{user.email}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
@@ -72,28 +135,42 @@ export function NavUser({
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  <AvatarImage src={user.image || ""} alt={user.name || ""} />
+                  <AvatarFallback className="rounded-lg">
+                    {getInitials(user.name, user.email)}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
+                  <span className="truncate font-medium">
+                    {user.name || "User"}
+                  </span>
                   <span className="truncate text-xs">{user.email}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <Sparkles />
-                Upgrade to Pro
-              </DropdownMenuItem>
+              <Link href="/profile">
+                <DropdownMenuItem>
+                  <BadgeCheck />
+                  Profile
+                </DropdownMenuItem>
+              </Link>
+              <Link href="/lich-su-xem">
+                <DropdownMenuItem>
+                  <History />
+                  Lịch sử xem
+                </DropdownMenuItem>
+              </Link>
+              <Link href="/phim-yeu-thich">
+                <DropdownMenuItem>
+                  <Heart />
+                  Phim Yêu thích
+                </DropdownMenuItem>
+              </Link>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck />
-                Account
-              </DropdownMenuItem>
               <DropdownMenuItem>
                 <CreditCard />
                 Billing
@@ -122,9 +199,9 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>
               <LogOut />
-              Log out
+              Đăng xuất
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

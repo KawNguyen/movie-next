@@ -1,0 +1,97 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { getAllWatchHistoryList } from "@/actions/watch-events";
+import { WatchHistoryCard } from "./watch-history-card";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import type { WatchHistory } from "@prisma/client";
+
+export function WatchHistoryList() {
+  const [watchHistory, setWatchHistory] = useState<WatchHistory[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const loadWatchHistory = async () => {
+    try {
+      setIsLoading(true);
+      const result = await getAllWatchHistoryList();
+      if (result.success) {
+        setWatchHistory(result.data || []);
+      } else {
+        toast.error(result.error || "Không thể tải lịch sử xem phim");
+      }
+    } catch {
+      toast.error("Có lỗi xảy ra khi tải lịch sử xem phim");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadWatchHistory();
+  }, []);
+
+  const handleRemoveHistory = (movieId: string) => {
+    setWatchHistory((prev) => prev.filter((item) => item.movieId !== movieId));
+  };
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        {Array.from({ length: 10 }).map((_, index) => (
+          <div key={index} className="animate-pulse">
+            <div className="aspect-[2/3] bg-muted rounded-lg mb-2" />
+            <div className="h-4 bg-muted rounded mb-1" />
+            <div className="h-3 bg-muted rounded w-2/3" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (watchHistory.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <div className="text-6xl mb-4">📺</div>
+        <h3 className="text-lg font-medium mb-2">Chưa có lịch sử xem phim</h3>
+        <p className="text-muted-foreground mb-4">
+          Hãy bắt đầu xem phim để theo dõi tiến trình của bạn
+        </p>
+        <Button onClick={() => window.history.back()}>Khám phá phim mới</Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">
+          Lịch sử xem phim ({watchHistory.length})
+        </h1>
+        <Button variant="outline" size="sm" onClick={loadWatchHistory}>
+          Làm mới
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        {watchHistory.map((item) => (
+          <WatchHistoryCard
+            key={item.id}
+            id={item.id}
+            movieId={item.movieId}
+            movieSlug={item.movieSlug}
+            movieName={item.movieName}
+            posterUrl={item.posterUrl}
+            movieType={null}
+            episodeId={item.episodeId}
+            episode={item.episodeId ? parseInt(item.episodeId) : null}
+            progress={item.progress}
+            duration={item.duration}
+            watchedAt={item.watchedAt}
+            onRemove={handleRemoveHistory}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}

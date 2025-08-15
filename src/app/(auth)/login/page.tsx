@@ -1,7 +1,7 @@
-import { LoginForm } from "@/components/login/login-form";
+import { BetterAuthLoginForm } from "@/components/login/better-auth-login-form";
 
 export default function Page() {
-  return <LoginForm />;
+  return <BetterAuthLoginForm />;
 }
 
 export async function generateMetadata() {

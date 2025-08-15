@@ -1,0 +1,120 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Better-auth models
+
+model User {
+  id            String   @id @default(cuid())
+  name          String?
+  email         String   @unique
+  emailVerified Boolean  @default(false) @map("email_verified")
+  image         String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  accounts     Account[]
+  sessions     Session[]
+  watchHistory WatchHistory[]
+  favorites    Favorite[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  userId                String    @map("user_id")
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  idToken               String?   @map("id_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@map("accounts")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@unique([identifier, value])
+  @@map("verifications")
+}
+
+// Watch history model - lưu lịch sử xem phim
+
+model WatchHistory {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  movieId     String   @map("movie_id") // ID phim từ API external
+  movieSlug   String   @map("movie_slug") // Slug phim để dễ truy cập
+  movieName   String   @map("movie_name") // Tên phim
+  posterUrl   String?  @map("poster_url") // Ảnh poster
+  episodeId   String?  @map("episode_id") // ID tập phim (nếu có)
+  episodeName String?  @map("episode_name") // Tên tập phim
+  watchedAt   DateTime @default(now()) @map("watched_at")
+  progress    Int      @default(0) // Thời gian đã xem (giây)
+  duration    Int      @default(0) // Tổng thời lượng (giây)
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, movieId, episodeId], name: "userId_movieId_episodeId")
+  @@map("watch_history")
+}
+
+// Favorite movies - phim yêu thích
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  movieId   String   @map("movie_id") // ID phim từ API external
+  movieSlug String   @map("movie_slug") // Slug phim để dễ truy cập
+  movieName String   @map("movie_name") // Tên phim
+  posterUrl String?  @map("poster_url") // Ảnh poster
+  movieType String?  @map("movie_type") // Loại phim: "single", "series"
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, movieId])
+  @@map("favorites")
+}

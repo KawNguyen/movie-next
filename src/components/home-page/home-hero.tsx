@@ -5,14 +5,12 @@ import { useState } from "react";
 import { MovieItem } from "@/types/movie-list.types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Play, Info } from "lucide-react";
+import { Play } from "lucide-react";
 import Autoplay from "embla-carousel-autoplay";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  // CarouselPrevious,
-  // CarouselNext,
 } from "@/components/ui/carousel";
 import { Skeleton } from "../ui/skeleton";
 import { useRouter } from "next/navigation";
@@ -148,14 +146,6 @@ export default function HomeHeroCarousel({ movies }: HomeHeroProps) {
                           <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
                           Xem Ngay
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          className="sm:size-lg border-gray-400 font-semibold px-4 sm:px-8"
-                        >
-                          <Info className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
-                          Thông Tin
-                        </Button>
                       </div>
                     </div>
                   </div>
@@ -164,9 +154,6 @@ export default function HomeHeroCarousel({ movies }: HomeHeroProps) {
             </CarouselItem>
           ))}
         </CarouselContent>
-
-        {/* <CarouselPrevious className="hidden sm:flex absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 border border-gray-400" />
-        <CarouselNext className="hidden sm:flex absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 border border-gray-400" /> */}
       </Carousel>
     </div>
   );

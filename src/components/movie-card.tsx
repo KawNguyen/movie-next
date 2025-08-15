@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Star, Calendar, Clock } from "lucide-react";
 import { MovieItem } from "@/types/movie-list.types";
 import { AspectRatio } from "./ui/aspect-ratio";
+import { FavoriteButton } from "./favorites/favorite-button";
 import Link from "next/link";
 
 const MovieCard = ({
@@ -42,6 +43,13 @@ const MovieCard = ({
               <Star className="w-3 h-3 mr-1 fill-yellow-400 text-yellow-400" />
               {tmdb.vote_average}
             </Badge>
+            <FavoriteButton
+              movieId={tmdb.id}
+              movieSlug={slug}
+              movieName={name}
+              posterUrl={poster_url}
+              className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            />
           </AspectRatio>
         </CardHeader>
         <CardContent className="p-2 sm:p-3 text-center sm:text-left">

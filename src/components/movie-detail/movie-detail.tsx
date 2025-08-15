@@ -196,6 +196,10 @@ export default function MovieDetail({ slug, initialData }: MovieDetailProps) {
                   key={`${selectedEpisode.slug}-${selectedServer}`}
                   selectedEpisode={selectedEpisode}
                   selectedServer={episodes[selectedServer]}
+                  movieId={movie._id}
+                  movieSlug={movie.slug}
+                  movieName={movie.name}
+                  posterUrl={movie.poster_url}
                 />
               )}
 

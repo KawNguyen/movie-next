@@ -1,29 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export const middleware = (req: NextRequest) => {
+export default async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const isAuthenticated = req.cookies.get("accessToken");
 
-  const isHistoryPage = pathname.startsWith("/lich-su-xem");
+  // Simple cookie-based authentication check
+  // Better Auth stores session information in cookies
+  const sessionCookie = req.cookies.get("better-auth.session_token");
+  const isAuthenticated = !!sessionCookie?.value;
+
+  const isProtectedPage =
+    pathname.startsWith("/lich-su-xem") ||
+    pathname.startsWith("/yeu-thich") ||
+    pathname.startsWith("/profile");
+
   const isAuthPage = ["/login"].includes(pathname);
 
-  // if (!isAuthenticated) return redirectTo("/login", req);
-
-  if (isHistoryPage && !isAuthenticated) {
-    return redirectTo("/login", req);
+  // Redirect to login if trying to access protected pages without auth
+  if (isProtectedPage && !isAuthenticated) {
+    return NextResponse.redirect(new URL("/login", req.url));
   }
 
+  // Redirect to home if trying to access auth pages while authenticated
   if (isAuthPage && isAuthenticated) {
-    return redirectTo("/", req);
+    return NextResponse.redirect(new URL("/", req.url));
   }
 
   return NextResponse.next();
-};
-
-function redirectTo(path: string, req: NextRequest) {
-  return NextResponse.redirect(new URL(path, req.url));
 }
 
 export const config = {
-  matcher: ["/lich-su-xem", "/login"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 };

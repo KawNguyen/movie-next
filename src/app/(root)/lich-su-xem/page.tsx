@@ -1,7 +1,11 @@
-import { ComingSoon, comingSoonConfigs } from "@/lib/coming-soon";
+import { WatchHistoryList } from "@/components/watch-history/watch-history-list";
 
 const Page = () => {
-  return <ComingSoon {...comingSoonConfigs.lichSuXem} />;
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <WatchHistoryList />
+    </div>
+  );
 };
 
 export default Page;

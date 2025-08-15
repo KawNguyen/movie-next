@@ -15,6 +15,7 @@ import { NavMain } from "./nav-main";
 import { NavUser } from "./nav-user";
 import { Heart } from "lucide-react";
 import { data } from "@/constant/routes";
+import { NavSecondary } from "./nav-secondary";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
@@ -38,9 +39,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent className="no-scrollbar">
         <NavMain items={data.navMain} />
+        <NavSecondary items={data.navSecondary} className="mt-auto"/>
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser />
       </SidebarFooter>
     </Sidebar>
   );

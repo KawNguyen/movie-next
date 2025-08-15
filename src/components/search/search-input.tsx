@@ -15,7 +15,6 @@ export function SearchInput({ onSearch }: SearchInputProps) {
   const [showResults, setShowResults] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-
   const debouncedQuery = useDebounce(query, 500);
 
   useEffect(() => {

@@ -5,6 +5,7 @@ import {
   PlayCircle,
   // TrendingUp,
   History,
+  Heart,
 } from "lucide-react";
 
 export const data = {
@@ -115,12 +116,18 @@ export const data = {
     //     { title: "Đề xuất hôm nay", url: "/top-imdb/de-xuat-hom-nay" },
     //   ],
     // },
+  ],
+  navSecondary: [
     {
       title: "Lịch Sử Xem",
       url: "/lich-su-xem",
       icon: History,
     },
+    {
+      title: "Phim Yêu Thích",
+      url: "/phim-yeu-thich",
+      icon: Heart,
+    },
   ],
-  navSecondary: [{ title: "Lịch Sử Xem", url: "/lich-su-xem", icon: History }],
   projects: [],
 };
