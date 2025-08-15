@@ -12,29 +12,45 @@ export default async function middleware(req: NextRequest) {
 
   const isAuthenticated = !!sessionToken;
 
-  // Debug trong production
-  if (process.env.NODE_ENV === "development") {
-    console.log("Middleware debug:", {
-      pathname,
-      isAuthenticated,
-      cookies: Object.fromEntries(
-        req.cookies.getAll().map((c) => [c.name, c.value])
-      ),
-      sessionToken: sessionToken ? "exists" : "missing",
-    });
-  }
-
   const isProtectedPage =
     pathname.startsWith("/lich-su-xem") ||
     pathname.startsWith("/phim-yeu-thich") ||
     pathname.startsWith("/profile");
+
+  // Debug trong cả development và production để troubleshoot
+  const shouldLog =
+    process.env.NODE_ENV === "development" ||
+    (isProtectedPage && !isAuthenticated);
+
+  if (shouldLog) {
+    console.log("Middleware debug:", {
+      pathname,
+      isAuthenticated,
+      environment: process.env.NODE_ENV,
+      url: req.url,
+      cookies: Object.fromEntries(
+        req.cookies
+          .getAll()
+          .map((c) => [c.name, `${c.value.substring(0, 20)}...`])
+      ),
+      sessionToken: sessionToken
+        ? `exists: ${sessionToken.substring(0, 20)}...`
+        : "missing",
+    });
+  }
 
   const isAuthPage = ["/login"].includes(pathname);
 
   // Redirect to login if trying to access protected pages without auth
   if (isProtectedPage && !isAuthenticated) {
     console.log(`Redirecting to login: ${pathname} (no auth)`);
-    return NextResponse.redirect(new URL("/login", req.url));
+
+    // Add a debug query param to help troubleshoot
+    const loginUrl = new URL("/login", req.url);
+    loginUrl.searchParams.set("redirect", pathname);
+    loginUrl.searchParams.set("debug", "no-session");
+
+    return NextResponse.redirect(loginUrl);
   }
 
   // Redirect to home if trying to access auth pages while authenticated

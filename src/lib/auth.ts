@@ -33,6 +33,26 @@ export const auth = betterAuth({
       maxAge: 60 * 5, // 5 minutes
     },
   },
+  advanced: {
+    cookiePrefix: "better-auth",
+    crossSubDomainCookies: {
+      enabled: true,
+    },
+    cookies: {
+      sessionToken: {
+        name: "session-token",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        domain:
+          process.env.NODE_ENV === "production"
+            ? process.env.VERCEL_URL
+              ? `.${process.env.VERCEL_URL}`
+              : undefined
+            : undefined,
+      },
+    },
+  },
   trustedOrigins: [
     "http://localhost:3000",
     process.env.NEXT_PUBLIC_APP_URL,
