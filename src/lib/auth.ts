@@ -36,20 +36,15 @@ export const auth = betterAuth({
   advanced: {
     cookiePrefix: "better-auth",
     crossSubDomainCookies: {
-      enabled: true,
+      enabled: false, // Disable để tránh domain issues
     },
     cookies: {
       sessionToken: {
-        name: "session-token",
+        name: "session_token", // Match với cookie names trong browser
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-        domain:
-          process.env.NODE_ENV === "production"
-            ? process.env.VERCEL_URL
-              ? `.${process.env.VERCEL_URL}`
-              : undefined
-            : undefined,
+        sameSite: process.env.NODE_ENV === "production" ? "lax" : "lax", // Use lax instead of none
+        // Don't set domain để let browser handle it
       },
     },
   },

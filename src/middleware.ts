@@ -3,12 +3,23 @@ import { NextRequest, NextResponse } from "next/server";
 export default async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Check multiple possible cookie names for better-auth
+  // Check multiple possible cookie names for better-auth (including production secure cookies)
+  const sessionTokens = {
+    secureToken: req.cookies.get("__Secure-better-auth.session_token")?.value,
+    secureData: req.cookies.get("__Secure-better-auth.session_data")?.value,
+    token: req.cookies.get("better-auth.session_token")?.value,
+    tokenAlt: req.cookies.get("better-auth.session-token")?.value,
+    simple: req.cookies.get("session-token")?.value,
+    legacy: req.cookies.get("better_auth_session")?.value,
+  };
+
   const sessionToken =
-    req.cookies.get("better-auth.session_token")?.value ||
-    req.cookies.get("better-auth.session-token")?.value ||
-    req.cookies.get("session-token")?.value ||
-    req.cookies.get("better_auth_session")?.value;
+    sessionTokens.secureToken ||
+    sessionTokens.secureData ||
+    sessionTokens.token ||
+    sessionTokens.tokenAlt ||
+    sessionTokens.simple ||
+    sessionTokens.legacy;
 
   const isAuthenticated = !!sessionToken;
 
@@ -28,14 +39,11 @@ export default async function middleware(req: NextRequest) {
       isAuthenticated,
       environment: process.env.NODE_ENV,
       url: req.url,
-      cookies: Object.fromEntries(
-        req.cookies
-          .getAll()
-          .map((c) => [c.name, `${c.value.substring(0, 20)}...`])
-      ),
-      sessionToken: sessionToken
-        ? `exists: ${sessionToken.substring(0, 20)}...`
-        : "missing",
+      sessionTokens, // Show which cookies were found
+      selectedToken: sessionToken
+        ? `${sessionToken.substring(0, 20)}...`
+        : "none",
+      allCookieNames: req.cookies.getAll().map((c) => c.name),
     });
   }
 
@@ -43,9 +51,8 @@ export default async function middleware(req: NextRequest) {
 
   // Redirect to login if trying to access protected pages without auth
   if (isProtectedPage && !isAuthenticated) {
-    console.log(`Redirecting to login: ${pathname} (no auth)`);
+    console.log(`Redirecting to login: ${pathname} (no session detected)`);
 
-    // Add a debug query param to help troubleshoot
     const loginUrl = new URL("/login", req.url);
     loginUrl.searchParams.set("redirect", pathname);
     loginUrl.searchParams.set("debug", "no-session");

@@ -2,7 +2,6 @@ import { SimpleThemeToggle } from "@/components/mode-toggle";
 import { SearchMobile } from "@/components/search";
 import AppBreadcrumb from "@/components/sidebar/app-breadcrumb";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
-import { SessionDebug } from "@/components/debug/session-debug";
 
 import {
   SidebarInset,
@@ -29,7 +28,6 @@ const Layout = ({ children }: { children: ReactNode }) => {
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>
-        <SessionDebug />
       </SidebarInset>
     </SidebarProvider>
   );
