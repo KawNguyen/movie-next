@@ -9,7 +9,7 @@ import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Button } from "@/components/ui/button";
 import { removeFromFavorites } from "@/actions/favorites";
 import { toast } from "sonner";
-import { useTransition } from "react";
+import { useTransition, useState, useEffect } from "react";
 
 interface FavoriteMovieCardProps {
   id: string;
@@ -32,6 +32,20 @@ export function FavoriteMovieCard({
   onRemove,
 }: FavoriteMovieCardProps) {
   const [isPending, startTransition] = useTransition();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const formatDate = (date: Date) => {
+    if (!isMounted) {
+      // Return consistent format for server-side rendering
+      return date.toISOString().split("T")[0];
+    }
+    // Client-side rendering with locale
+    return date.toLocaleDateString("vi-VN");
+  };
 
   const getImageUrl = (imagePath: string | null) => {
     if (!imagePath) return "/placeholder-movie.jpg";
@@ -87,7 +101,7 @@ export function FavoriteMovieCard({
         <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
           <div className="flex items-center gap-1">
             <Calendar className="w-4 h-4" />
-            {new Date(createdAt).toLocaleDateString("vi-VN")}
+            {formatDate(new Date(createdAt))}
           </div>
           {movieType && (
             <Badge variant="outline" className="text-xs">

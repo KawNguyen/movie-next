@@ -28,31 +28,10 @@ export default async function middleware(req: NextRequest) {
     pathname.startsWith("/phim-yeu-thich") ||
     pathname.startsWith("/profile");
 
-  // Debug trong cả development và production để troubleshoot
-  const shouldLog =
-    process.env.NODE_ENV === "development" ||
-    (isProtectedPage && !isAuthenticated);
-
-  if (shouldLog) {
-    console.log("Middleware debug:", {
-      pathname,
-      isAuthenticated,
-      environment: process.env.NODE_ENV,
-      url: req.url,
-      sessionTokens, // Show which cookies were found
-      selectedToken: sessionToken
-        ? `${sessionToken.substring(0, 20)}...`
-        : "none",
-      allCookieNames: req.cookies.getAll().map((c) => c.name),
-    });
-  }
-
   const isAuthPage = ["/login"].includes(pathname);
 
   // Redirect to login if trying to access protected pages without auth
   if (isProtectedPage && !isAuthenticated) {
-    console.log(`Redirecting to login: ${pathname} (no session detected)`);
-
     const loginUrl = new URL("/login", req.url);
     loginUrl.searchParams.set("redirect", pathname);
     loginUrl.searchParams.set("debug", "no-session");

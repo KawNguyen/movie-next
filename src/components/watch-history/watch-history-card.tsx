@@ -46,6 +46,10 @@ export function WatchHistoryCard({
 }: WatchHistoryCardProps) {
   const [isPending, startTransition] = useTransition();
 
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString("vi-VN");
+  };
+
   const getImageUrl = (imagePath: string | null) => {
     if (!imagePath) return "/placeholder-movie.jpg";
     if (imagePath.startsWith("http")) return imagePath;
@@ -144,10 +148,10 @@ export function WatchHistoryCard({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-muted-foreground">
           <div className="flex items-center gap-1">
             <Calendar className="w-3 h-3" />
-            <span>{new Date(watchedAt).toLocaleDateString("vi-VN")}</span>
+            <span>{formatDate(new Date(watchedAt))}</span>
             {duration && (
               <>
                 <span className="mx-1">•</span>
@@ -163,7 +167,7 @@ export function WatchHistoryCard({
             <Button
               size="sm"
               variant={progressPercentage >= 95 ? "outline" : "default"}
-              className="h-7 px-3 text-xs"
+              className="h-7 px-3 text-xs w-full"
             >
               <Play className="w-3 h-3 mr-1" />
               {progressPercentage >= 95 ? "Xem lại" : "Tiếp tục"}

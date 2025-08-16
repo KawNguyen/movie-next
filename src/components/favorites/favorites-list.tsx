@@ -5,20 +5,26 @@ import { getFavorites } from "@/actions/favorites";
 import { FavoriteMovieCard } from "./favorite-movie-card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import type { FavoriteMovie } from "@/data";
 
-interface Favorite {
-  id: string;
-  movieId: string;
-  movieSlug: string;
-  movieName: string;
-  posterUrl: string | null;
-  movieType: string | null;
-  createdAt: Date;
+interface FavoritesListProps {
+  initialData?: FavoriteMovie[];
+  error?: string;
 }
 
-export function FavoritesList() {
-  const [favorites, setFavorites] = useState<Favorite[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+export function FavoritesList({
+  initialData,
+  error: initialError,
+}: FavoritesListProps) {
+  const [favorites, setFavorites] = useState<FavoriteMovie[]>(
+    initialData || []
+  );
+  const [isLoading, setIsLoading] = useState(!initialData);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const loadFavorites = async () => {
     try {
@@ -37,12 +43,41 @@ export function FavoritesList() {
   };
 
   useEffect(() => {
-    loadFavorites();
-  }, []);
+    if (initialError) {
+      toast.error(initialError);
+    }
+
+    if (!initialData) {
+      loadFavorites();
+    }
+  }, [initialData, initialError]);
 
   const handleRemoveFavorite = (movieId: string) => {
     setFavorites((prev) => prev.filter((fav) => fav.movieId !== movieId));
   };
+
+  // Prevent hydration mismatch
+  if (!isMounted) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Phim yêu thích</h1>
+          <Button variant="outline" size="sm" disabled>
+            Làm mới
+          </Button>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {Array.from({ length: 10 }).map((_, index) => (
+            <div key={index} className="animate-pulse">
+              <div className="aspect-[2/3] bg-muted rounded-lg mb-2" />
+              <div className="h-4 bg-muted rounded mb-1" />
+              <div className="h-3 bg-muted rounded w-2/3" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

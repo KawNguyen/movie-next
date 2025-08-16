@@ -115,13 +115,6 @@ export async function removeFromWatchHistory(
     // Normalize episodeId - phải match với cách lưu trong addToWatchHistory
     const normalizedEpisodeId = episodeId || "";
 
-    // Log để debug
-    console.log("Removing watch history:", {
-      userId: session.user.id,
-      movieId,
-      episodeId: normalizedEpisodeId,
-    });
-
     // Tìm record trước để verify nó tồn tại
     const existingRecord = await prisma.watchHistory.findUnique({
       where: {
@@ -153,9 +146,6 @@ export async function removeFromWatchHistory(
         };
       }
 
-      console.log(
-        `Deleted ${deletedRecords.count} watch history records for movie ${movieId}`
-      );
       revalidatePath("/lich-su-xem");
       return { success: true };
     }
@@ -228,10 +218,6 @@ export async function removeMovieFromWatchHistory(movieId: string) {
         movieId: movieId,
       },
     });
-
-    console.log(
-      `Deleted ${deletedRecords.count} watch history records for movie ${movieId}`
-    );
 
     revalidatePath("/lich-su-xem");
     return {

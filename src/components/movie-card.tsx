@@ -44,7 +44,7 @@ const MovieCard = ({
               {tmdb.vote_average}
             </Badge>
             <FavoriteButton
-              movieId={tmdb.id}
+              movieId={tmdb?.id?.toString() || slug}
               movieSlug={slug}
               movieName={name}
               posterUrl={poster_url}

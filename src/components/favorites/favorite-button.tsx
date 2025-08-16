@@ -39,6 +39,11 @@ export function FavoriteButton({
   useEffect(() => {
     const checkStatus = async () => {
       try {
+        if (!movieId || typeof movieId !== "string" || !movieId.trim()) {
+          console.warn("Invalid movieId provided to FavoriteButton:", movieId);
+          return;
+        }
+
         const result = await checkIsFavorite(movieId);
         if (result.success) {
           setIsFavorite(result.data);
@@ -54,6 +59,12 @@ export function FavoriteButton({
   const handleToggle = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    // Validate movieId before making the call
+    if (!movieId || typeof movieId !== "string" || !movieId.trim()) {
+      toast.error("MovieId không hợp lệ");
+      return;
+    }
 
     startTransition(async () => {
       try {

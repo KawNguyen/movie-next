@@ -30,17 +30,6 @@ export function VideoPlayer({
   posterUrl,
   thumbUrl,
 }: VideoPlayerProps) {
-  // Debug log để kiểm tra thumbUrl
-  console.log("VideoPlayer Debug:", {
-    movieId,
-    movieSlug,
-    movieName,
-    posterUrl,
-    thumbUrl,
-    episodeId: selectedEpisode.slug,
-    episodeName: selectedEpisode.name,
-  });
-
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const [isLoading, setIsLoading] = useState(true);

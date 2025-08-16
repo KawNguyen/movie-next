@@ -24,6 +24,7 @@ const ContainerHomePage = ({ initialData }: ContainerHomePageProps) => {
   return (
     <main className="space-y-6">
       <HomeHero movies={initialData?.items || []} />
+
       <ContinueWatchingSection />
       <MovieList
         loading={false}

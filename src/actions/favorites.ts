@@ -14,6 +14,11 @@ export async function addToFavorites(movieData: {
   movieType?: string;
 }) {
   try {
+    // Validate required fields
+    if (!movieData.movieId || !movieData.movieSlug || !movieData.movieName) {
+      throw new Error("Thiếu thông tin phim");
+    }
+
     // Get current session
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -28,7 +33,7 @@ export async function addToFavorites(movieData: {
       where: {
         userId_movieId: {
           userId: session.user.id,
-          movieId: movieData.movieId,
+          movieId: movieData.movieId.trim(),
         },
       },
     });
@@ -41,9 +46,9 @@ export async function addToFavorites(movieData: {
     const favorite = await prisma.favorite.create({
       data: {
         userId: session.user.id,
-        movieId: movieData.movieId,
-        movieSlug: movieData.movieSlug,
-        movieName: movieData.movieName,
+        movieId: movieData.movieId.trim(),
+        movieSlug: movieData.movieSlug.trim(),
+        movieName: movieData.movieName.trim(),
         posterUrl: movieData.posterUrl,
         movieType: movieData.movieType || "single",
       },
@@ -62,6 +67,14 @@ export async function addToFavorites(movieData: {
 
 export async function removeFromFavorites(movieId: string) {
   try {
+    // Validate movieId
+    if (!movieId || typeof movieId !== "string" || !movieId.trim()) {
+      throw new Error("MovieId không hợp lệ");
+    }
+
+    // Clean movieId
+    const cleanMovieId = movieId.trim();
+
     // Get current session
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -76,7 +89,7 @@ export async function removeFromFavorites(movieId: string) {
       where: {
         userId_movieId: {
           userId: session.user.id,
-          movieId: movieId,
+          movieId: cleanMovieId,
         },
       },
     });
@@ -124,6 +137,12 @@ export async function getFavorites() {
 
 export async function checkIsFavorite(movieId: string) {
   try {
+    // Validate movieId
+    if (!movieId || typeof movieId !== "string" || movieId.trim() === "") {
+      console.error("Invalid movieId:", movieId);
+      return { success: false, data: false, error: "MovieId is required" };
+    }
+
     // Get current session
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -137,7 +156,7 @@ export async function checkIsFavorite(movieId: string) {
       where: {
         userId_movieId: {
           userId: session.user.id,
-          movieId: movieId,
+          movieId: movieId.trim(),
         },
       },
     });

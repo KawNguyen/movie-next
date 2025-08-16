@@ -25,6 +25,29 @@ export async function sendWatchEvent(
   data: WatchEventData
 ) {
   try {
+    // Validate essential data
+    if (
+      !data.movieId ||
+      typeof data.movieId !== "string" ||
+      !data.movieId.trim()
+    ) {
+      return {
+        success: false,
+        error: "MovieId không hợp lệ",
+      };
+    }
+
+    if (
+      !data.episodeId ||
+      typeof data.episodeId !== "string" ||
+      !data.episodeId.trim()
+    ) {
+      return {
+        success: false,
+        error: "EpisodeId không hợp lệ",
+      };
+    }
+
     const session = await auth.api.getSession({
       headers: await headers(),
     });
@@ -39,12 +62,12 @@ export async function sendWatchEvent(
     const event: WatchEvent = {
       type: eventType,
       userId: session.user.id,
-      movieId: data.movieId,
+      movieId: data.movieId.trim(),
       movieSlug: data.movieSlug,
       movieName: data.movieName,
       posterUrl: data.posterUrl,
       thumbUrl: data.thumbUrl,
-      episodeId: data.episodeId,
+      episodeId: data.episodeId.trim(),
       episodeName: data.episodeName,
       progress: Math.floor(data.progress),
       duration: Math.floor(data.duration),
@@ -217,6 +240,27 @@ export async function getWatchProgressForEpisode(
   episodeId: string
 ) {
   try {
+    // Validate parameters
+    if (!movieId || typeof movieId !== "string" || !movieId.trim()) {
+      return {
+        success: false,
+        error: "MovieId không hợp lệ",
+        data: null,
+      };
+    }
+
+    if (!episodeId || typeof episodeId !== "string" || !episodeId.trim()) {
+      return {
+        success: false,
+        error: "EpisodeId không hợp lệ",
+        data: null,
+      };
+    }
+
+    // Clean parameters
+    const cleanMovieId = movieId.trim();
+    const cleanEpisodeId = episodeId.trim();
+
     const session = await auth.api.getSession({
       headers: await headers(),
     });
@@ -234,7 +278,8 @@ export async function getWatchProgressForEpisode(
       1000
     );
     const episodeRecord = result.find(
-      (record) => record.movieId === movieId && record.episodeId === episodeId
+      (record) =>
+        record.movieId === cleanMovieId && record.episodeId === cleanEpisodeId
     );
 
     return {

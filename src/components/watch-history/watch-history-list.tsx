@@ -6,10 +6,34 @@ import { WatchHistoryCard } from "./watch-history-card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { WatchHistory } from "@prisma/client";
+import type { WatchHistoryMovie } from "@/data";
 
-export function WatchHistoryList() {
-  const [watchHistory, setWatchHistory] = useState<WatchHistory[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+interface WatchHistoryListProps {
+  initialData?: WatchHistoryMovie[];
+  error?: string;
+}
+
+export function WatchHistoryList({
+  initialData,
+  error: initialError,
+}: WatchHistoryListProps) {
+  const [watchHistory, setWatchHistory] = useState<WatchHistory[]>(
+    initialData?.map((item) => ({
+      id: item.id,
+      userId: "",
+      movieId: item.movieId,
+      movieSlug: item.movieSlug,
+      movieName: item.movieName,
+      posterUrl: item.posterUrl,
+      thumbUrl: item.thumbUrl,
+      episodeId: item.episodeId,
+      episodeName: item.episodeName,
+      watchedAt: item.watchedAt,
+      progress: item.progress,
+      duration: item.duration,
+    })) || []
+  );
+  const [isLoading, setIsLoading] = useState(!initialData);
 
   const loadWatchHistory = async () => {
     try {
@@ -28,8 +52,14 @@ export function WatchHistoryList() {
   };
 
   useEffect(() => {
-    loadWatchHistory();
-  }, []);
+    if (initialError) {
+      toast.error(initialError);
+    }
+
+    if (!initialData) {
+      loadWatchHistory();
+    }
+  }, [initialData, initialError]);
 
   const handleRemoveHistory = (movieId: string) => {
     setWatchHistory((prev) => prev.filter((item) => item.movieId !== movieId));
@@ -100,7 +130,7 @@ export function WatchHistoryList() {
         </Button>
       </div>
 
-      <div className="space-y-4">
+      <div className="grid grid-cols-2 md:grid-cols-1 gap-4">
         {watchHistory.map((item) => (
           <WatchHistoryCard
             key={item.id}
