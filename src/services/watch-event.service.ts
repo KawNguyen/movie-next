@@ -49,6 +49,7 @@ export class WatchEventService {
         duration: event.duration,
         movieName: event.movieName,
         posterUrl: event.posterUrl,
+        thumbUrl: event.thumbUrl,
         episodeName: event.episodeName,
       },
       create: {
@@ -57,6 +58,7 @@ export class WatchEventService {
         movieSlug: event.movieSlug,
         movieName: event.movieName,
         posterUrl: event.posterUrl,
+        thumbUrl: event.thumbUrl,
         episodeId: event.episodeId,
         episodeName: event.episodeName,
         watchedAt: event.timestamp,
@@ -100,6 +102,10 @@ export class WatchEventService {
         watchedAt: event.timestamp,
         progress: event.progress,
         duration: event.duration,
+        movieName: event.movieName,
+        posterUrl: event.posterUrl,
+        thumbUrl: event.thumbUrl,
+        episodeName: event.episodeName,
       },
       create: {
         userId: event.userId,
@@ -107,6 +113,7 @@ export class WatchEventService {
         movieSlug: event.movieSlug,
         movieName: event.movieName,
         posterUrl: event.posterUrl,
+        thumbUrl: event.thumbUrl,
         episodeId: event.episodeId,
         episodeName: event.episodeName,
         watchedAt: event.timestamp,
@@ -132,6 +139,10 @@ export class WatchEventService {
         watchedAt: event.timestamp,
         progress: event.duration, // Set progress = duration for completion
         duration: event.duration,
+        movieName: event.movieName,
+        posterUrl: event.posterUrl,
+        thumbUrl: event.thumbUrl,
+        episodeName: event.episodeName,
       },
       create: {
         userId: event.userId,
@@ -139,6 +150,7 @@ export class WatchEventService {
         movieSlug: event.movieSlug,
         movieName: event.movieName,
         posterUrl: event.posterUrl,
+        thumbUrl: event.thumbUrl,
         episodeId: event.episodeId,
         episodeName: event.episodeName,
         watchedAt: event.timestamp,

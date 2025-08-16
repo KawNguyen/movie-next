@@ -200,6 +200,7 @@ export default function MovieDetail({ slug, initialData }: MovieDetailProps) {
                   movieSlug={movie.slug}
                   movieName={movie.name}
                   posterUrl={movie.poster_url}
+                  thumbUrl={movie.thumb_url}
                 />
               )}
 

@@ -10,6 +10,7 @@ interface WatchEventData {
   movieSlug: string;
   movieName: string;
   posterUrl?: string;
+  thumbUrl?: string;
   episodeId: string;
   episodeName: string;
   progress: number;
@@ -42,6 +43,7 @@ export async function sendWatchEvent(
       movieSlug: data.movieSlug,
       movieName: data.movieName,
       posterUrl: data.posterUrl,
+      thumbUrl: data.thumbUrl,
       episodeId: data.episodeId,
       episodeName: data.episodeName,
       progress: Math.floor(data.progress),

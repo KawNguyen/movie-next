@@ -18,6 +18,7 @@ interface VideoPlayerProps {
   movieSlug: string;
   movieName: string;
   posterUrl?: string;
+  thumbUrl?: string;
 }
 
 export function VideoPlayer({
@@ -27,7 +28,19 @@ export function VideoPlayer({
   movieSlug,
   movieName,
   posterUrl,
+  thumbUrl,
 }: VideoPlayerProps) {
+  // Debug log để kiểm tra thumbUrl
+  console.log("VideoPlayer Debug:", {
+    movieId,
+    movieSlug,
+    movieName,
+    posterUrl,
+    thumbUrl,
+    episodeId: selectedEpisode.slug,
+    episodeName: selectedEpisode.name,
+  });
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,6 +61,7 @@ export function VideoPlayer({
     movieSlug,
     movieName,
     posterUrl,
+    thumbUrl,
     episodeId: selectedEpisode.slug,
     episodeName: selectedEpisode.name,
   });

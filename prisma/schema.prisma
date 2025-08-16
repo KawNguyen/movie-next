@@ -87,6 +87,7 @@ model WatchHistory {
   movieSlug   String   @map("movie_slug") // Slug phim để dễ truy cập
   movieName   String   @map("movie_name") // Tên phim
   posterUrl   String?  @map("poster_url") // Ảnh poster
+  thumbUrl    String?  @map("thumb_url") // Ảnh thumbnail (nếu có)
   episodeId   String?  @map("episode_id") // ID tập phim (nếu có)
   episodeName String?  @map("episode_name") // Tên tập phim
   watchedAt   DateTime @default(now()) @map("watched_at")

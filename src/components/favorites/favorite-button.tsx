@@ -16,6 +16,7 @@ interface FavoriteButtonProps {
   movieSlug: string;
   movieName: string;
   posterUrl?: string;
+  thumbUrl?: string;
   movieType?: string;
   className?: string;
   size?: "sm" | "md" | "lg";
@@ -26,6 +27,7 @@ export function FavoriteButton({
   movieSlug,
   movieName,
   posterUrl,
+  thumbUrl,
   movieType,
   className,
   size = "sm",
@@ -71,6 +73,7 @@ export function FavoriteButton({
             movieSlug,
             movieName,
             posterUrl,
+            thumbUrl,
             movieType,
           });
           if (result.success) {

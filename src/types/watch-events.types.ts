@@ -12,6 +12,7 @@ export interface WatchEvent {
   movieSlug: string;
   movieName: string;
   posterUrl?: string;
+  thumbUrl?: string; // ảnh thu nhỏ
   episodeId: string;
   episodeName: string;
   progress: number; // thời gian hiện tại (giây)
@@ -39,6 +40,7 @@ export interface WatchHistoryWithStatus {
   movieSlug: string;
   movieName: string;
   posterUrl?: string;
+  thumbUrl?: string;
   episodeId: string;
   episodeName: string;
   progress: number;

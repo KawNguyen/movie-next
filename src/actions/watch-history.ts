@@ -10,6 +10,7 @@ export async function addToWatchHistory(watchData: {
   movieSlug: string;
   movieName: string;
   posterUrl?: string;
+  thumbUrl?: string;
   episodeId?: string;
   episodeName?: string;
   progress?: number;
@@ -40,6 +41,7 @@ export async function addToWatchHistory(watchData: {
         duration: watchData.duration || 0,
         episodeName: watchData.episodeName,
         posterUrl: watchData.posterUrl,
+        thumbUrl: watchData.thumbUrl,
       },
       create: {
         userId: session.user.id,
@@ -47,6 +49,7 @@ export async function addToWatchHistory(watchData: {
         movieSlug: watchData.movieSlug,
         movieName: watchData.movieName,
         posterUrl: watchData.posterUrl,
+        thumbUrl: watchData.thumbUrl,
         episodeId: watchData.episodeId || "",
         episodeName: watchData.episodeName,
         progress: watchData.progress || 0,

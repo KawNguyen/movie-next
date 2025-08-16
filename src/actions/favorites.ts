@@ -10,6 +10,7 @@ export async function addToFavorites(movieData: {
   movieSlug: string;
   movieName: string;
   posterUrl?: string;
+  thumbUrl?: string;
   movieType?: string;
 }) {
   try {
