@@ -6,6 +6,7 @@ import { FavoriteMovieCard } from "./favorite-movie-card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { FavoriteMovie } from "@/data";
+import { FavoriteMovieCardSkeleton } from "./loading";
 
 interface FavoritesListProps {
   initialData?: FavoriteMovie[];
@@ -20,11 +21,6 @@ export function FavoritesList({
     initialData || []
   );
   const [isLoading, setIsLoading] = useState(!initialData);
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   const loadFavorites = async () => {
     try {
@@ -56,38 +52,11 @@ export function FavoritesList({
     setFavorites((prev) => prev.filter((fav) => fav.movieId !== movieId));
   };
 
-  // Prevent hydration mismatch
-  if (!isMounted) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Phim yêu thích</h1>
-          <Button variant="outline" size="sm" disabled>
-            Làm mới
-          </Button>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {Array.from({ length: 10 }).map((_, index) => (
-            <div key={index} className="animate-pulse">
-              <div className="aspect-[2/3] bg-muted rounded-lg mb-2" />
-              <div className="h-4 bg-muted rounded mb-1" />
-              <div className="h-3 bg-muted rounded w-2/3" />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        {Array.from({ length: 10 }).map((_, index) => (
-          <div key={index} className="animate-pulse">
-            <div className="aspect-[2/3] bg-muted rounded-lg mb-2" />
-            <div className="h-4 bg-muted rounded mb-1" />
-            <div className="h-3 bg-muted rounded w-2/3" />
-          </div>
+      <div className="space-y-4 md:space-y-3">
+        {Array.from({ length: 8 }).map((_, index) => (
+          <FavoriteMovieCardSkeleton key={index} />
         ))}
       </div>
     );
@@ -117,7 +86,7 @@ export function FavoritesList({
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      <div className="space-y-4 md:space-y-3">
         {favorites.map((favorite) => (
           <FavoriteMovieCard
             key={favorite.id}

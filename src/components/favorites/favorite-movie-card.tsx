@@ -40,10 +40,8 @@ export function FavoriteMovieCard({
 
   const formatDate = (date: Date) => {
     if (!isMounted) {
-      // Return consistent format for server-side rendering
       return date.toISOString().split("T")[0];
     }
-    // Client-side rendering with locale
     return date.toLocaleDateString("vi-VN");
   };
 
@@ -71,18 +69,25 @@ export function FavoriteMovieCard({
   };
 
   return (
-    <Card className="group border-1 p-0 overflow-hidden transition-all duration-300 hover:-translate-y-2 relative">
-      <Link href={`/phim/${movieSlug}`}>
+    <Card
+      className="group border-1 p-0 overflow-hidden transition-all duration-300 hover:-translate-y-2 relative 
+                     flex flex-col md:flex-row md:h-40"
+    >
+      {/* Mobile: Vertical Layout | Desktop: Left side image */}
+      <Link
+        href={`/phim/${movieSlug}`}
+        className="w-full md:w-48 flex-shrink-0"
+      >
         <CardHeader className="p-0">
           <AspectRatio
             ratio={2 / 3}
-            className="relative overflow-hidden w-full"
+            className="relative overflow-hidden w-full md:aspect-[3/2] md:h-40"
           >
             <Image
               src={getImageUrl(posterUrl)}
               alt={movieName}
               fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              sizes="(max-width: 768px) 100vw, 200px"
               className="object-cover transition-transform duration-300 group-hover:scale-110"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -94,27 +99,43 @@ export function FavoriteMovieCard({
         </CardHeader>
       </Link>
 
-      <CardContent className="p-2 sm:p-3 text-center sm:text-left">
-        <h3 className="font-semibold text-md md:text-lg mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-          {movieName}
-        </h3>
-        <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
-          <div className="flex items-center gap-1">
-            <Calendar className="w-4 h-4" />
-            {formatDate(new Date(createdAt))}
+      {/* Mobile: Bottom content | Desktop: Right side content */}
+      <CardContent
+        className="p-2 sm:p-3 text-center sm:text-left 
+                              md:flex-1 md:flex md:flex-col md:justify-between md:text-left"
+      >
+        <div>
+          <Link href={`/phim/${movieSlug}`}>
+            <h3
+              className="font-semibold text-md md:text-lg mb-2 line-clamp-2 
+                          group-hover:text-primary transition-colors md:line-clamp-3"
+            >
+              {movieName}
+            </h3>
+          </Link>
+          <div
+            className="flex items-center justify-between text-sm text-muted-foreground mb-2 
+                          md:flex-col md:items-start md:gap-2"
+          >
+            <div className="flex items-center gap-1">
+              <Calendar className="w-4 h-4" />
+              {formatDate(new Date(createdAt))}
+            </div>
+            {movieType && (
+              <Badge variant="outline" className="text-xs">
+                {movieType === "series" ? "Phim bộ" : "Phim lẻ"}
+              </Badge>
+            )}
           </div>
-          {movieType && (
-            <Badge variant="outline" className="text-xs">
-              {movieType === "series" ? "Phim bộ" : "Phim lẻ"}
-            </Badge>
-          )}
         </div>
       </CardContent>
 
+      {/* Remove button - responsive positioning */}
       <Button
         size="sm"
         variant="destructive"
-        className="absolute top-2 right-2 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute top-2 right-2 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity
+                   md:relative md:opacity-100 md:m-2 md:self-start md:hover:opacity-100"
         onClick={handleRemove}
         disabled={isPending}
       >

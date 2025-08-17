@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Clock, Play } from "lucide-react";
+import { Clock, Play, ArrowRight } from "lucide-react";
 import { getContinueWatchingList } from "@/actions/watch-events";
 import Image from "next/image";
 import Link from "next/link";
 import type { WatchHistory } from "@prisma/client";
+import { Button } from "@/components/ui/button";
 
 export function ContinueWatchingSection() {
   const [continueWatching, setContinueWatching] = useState<WatchHistory[]>([]);
@@ -17,7 +18,7 @@ export function ContinueWatchingSection() {
   useEffect(() => {
     const fetchContinueWatching = async () => {
       try {
-        const result = await getContinueWatchingList(6); // Lấy 6 phim
+        const result = await getContinueWatchingList(6);
         if (result.success) {
           setContinueWatching(result.data);
         }
@@ -41,9 +42,9 @@ export function ContinueWatchingSection() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="animate-pulse">
+          <div className="flex gap-4 overflow-x-auto no-scrollbar">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="min-w-[220px] animate-pulse">
                 <div className="aspect-video bg-gray-300 rounded-lg mb-2"></div>
                 <div className="h-4 bg-gray-300 rounded mb-1"></div>
                 <div className="h-3 bg-gray-300 rounded w-2/3"></div>
@@ -55,21 +56,24 @@ export function ContinueWatchingSection() {
     );
   }
 
-  if (continueWatching.length === 0) {
-    return null; // Không hiển thị gì nếu không có phim đang xem
-  }
+  if (continueWatching.length === 0) return null;
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex items-center justify-between">
         <CardTitle className="flex items-center gap-2">
           <Clock className="h-5 w-5" />
-          Tiếp tục xem ({continueWatching.length})
+          Tiếp tục xem
         </CardTitle>
+        <Button asChild variant="ghost" size="sm" className="gap-1">
+          <Link href="/lich-su-xem">
+            Xem thêm <ArrowRight className="h-4 w-4" />
+          </Link>
+        </Button>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {continueWatching.map((item) => {
+        <div className="flex gap-4 overflow-x-auto no-scrollbar">
+          {continueWatching.slice(0, 3).map((item) => {
             const progressPercent =
               item.duration > 0
                 ? Math.round((item.progress / item.duration) * 100)
@@ -80,14 +84,14 @@ export function ContinueWatchingSection() {
               : `/phim/${item.movieSlug}`;
 
             return (
-              <Link key={item.id} href={episodeUrl}>
-                <div className="group relative overflow-hidden rounded-lg bg-card hover:bg-card/80 transition-colors">
+              <Link key={item.id} href={episodeUrl} className="border rounded-lg">
+                <div className="group relative min-w-[220px] rounded-lg bg-card hover:bg-card/80 transition-colors overflow-hidden">
                   <div className="aspect-video relative">
                     <Image
                       src={item.posterUrl || "/placeholder-movie.jpg"}
                       alt={item.movieName}
                       fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="object-cover transition-transform duration-300"
                     />
                     <div className="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors" />
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
