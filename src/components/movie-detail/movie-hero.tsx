@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, Calendar, Clock, Eye, Globe } from "lucide-react";
 import { Movie } from "@/types/movie-detail.types";
+import { FavoriteButtonSimple } from "@/components/favorites/favorite-button-simple";
 
 interface MovieHeroProps {
   movie: Movie;
@@ -34,6 +35,21 @@ export function MovieHero({ movie }: MovieHeroProps) {
                 {movie.name}
               </h1>
               <p className="text-md md:text-xl  mb-2">{movie.origin_name}</p>
+            </div>
+
+            <div className="flex items-center gap-3 justify-center md:justify-start mb-4">
+              <FavoriteButtonSimple
+                movieId={movie.tmdb.id?.toString() || movie.slug}
+                movieSlug={movie.slug}
+                movieName={movie.name}
+                posterUrl={movie.poster_url}
+                movieType={movie.type}
+                size="md"
+                className="bg-red-500 hover:bg-red-600"
+              />
+              <span className="text-sm text-muted-foreground">
+                Thêm vào danh sách yêu thích
+              </span>
             </div>
 
             <div className="flex max-w-md flex-wrap gap-2 justify-center md:justify-start mb-2">

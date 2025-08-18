@@ -3,53 +3,56 @@
 import { useEffect, useState, useTransition } from "react";
 import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  addToFavorites,
-  removeFromFavorites,
-  checkIsFavorite,
-} from "@/actions/favorites";
+import { addToFavorites, removeFromFavorites } from "@/actions/favorites";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-interface FavoriteButtonProps {
+interface FavoriteButtonSimpleProps {
   movieId: string;
   movieSlug: string;
   movieName: string;
   posterUrl?: string;
-  thumbUrl?: string;
   movieType?: string;
   className?: string;
   size?: "sm" | "md" | "lg";
 }
 
-export function FavoriteButton({
+export function FavoriteButtonSimple({
   movieId,
   movieSlug,
   movieName,
   posterUrl,
-  thumbUrl,
   movieType,
   className,
   size = "sm",
-}: FavoriteButtonProps) {
+}: FavoriteButtonSimpleProps) {
   const [isFavorite, setIsFavorite] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
 
-  // Check favorite status when component mounts
+  // Check favorite status when component mounts - only for single movie
   useEffect(() => {
     const checkStatus = async () => {
       try {
         if (!movieId || typeof movieId !== "string" || !movieId.trim()) {
           console.warn("Invalid movieId provided to FavoriteButton:", movieId);
+          setIsLoading(false);
           return;
         }
 
-        const result = await checkIsFavorite(movieId);
+        // Use the single-item API check for detail pages
+        const response = await fetch(
+          `/api/favorites/check/${encodeURIComponent(movieId)}`
+        );
+        const result = await response.json();
+
         if (result.success) {
           setIsFavorite(result.data);
         }
       } catch (error) {
         console.error("Error checking favorite status:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -60,7 +63,6 @@ export function FavoriteButton({
     e.preventDefault();
     e.stopPropagation();
 
-    // Validate movieId before making the call
     if (!movieId || typeof movieId !== "string" || !movieId.trim()) {
       toast.error("MovieId không hợp lệ");
       return;
@@ -75,7 +77,7 @@ export function FavoriteButton({
             toast.success("Đã xóa khỏi danh sách yêu thích");
           } else {
             toast.error(
-              result.error || "Không thể xóa khỏi danh sách yêu thích",
+              result.error || "Không thể xóa khỏi danh sách yêu thích"
             );
           }
         } else {
@@ -84,7 +86,6 @@ export function FavoriteButton({
             movieSlug,
             movieName,
             posterUrl,
-            thumbUrl,
             movieType,
           });
           if (result.success) {
@@ -92,7 +93,7 @@ export function FavoriteButton({
             toast.success("Đã thêm vào danh sách yêu thích");
           } else {
             toast.error(
-              result.error || "Không thể thêm vào danh sách yêu thích",
+              result.error || "Không thể thêm vào danh sách yêu thích"
             );
           }
         }
@@ -115,6 +116,23 @@ export function FavoriteButton({
     lg: "h-6 w-6",
   };
 
+  if (isLoading) {
+    return (
+      <Button
+        variant="outline"
+        size="sm"
+        className={cn(
+          sizeClasses[size],
+          "bg-black/40 text-white border-white/20 animate-pulse",
+          className
+        )}
+        disabled
+      >
+        <Heart className={iconSizes[size]} />
+      </Button>
+    );
+  }
+
   return (
     <Button
       variant={isFavorite ? "default" : "outline"}
@@ -125,7 +143,7 @@ export function FavoriteButton({
           ? "bg-red-500 hover:bg-red-600 text-white"
           : "bg-black/40 hover:bg-black/60 text-white border-white/20",
         "transition-all duration-200",
-        className,
+        className
       )}
       onClick={handleToggle}
       disabled={isPending}
