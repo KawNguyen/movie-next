@@ -58,7 +58,7 @@ export async function getWatchHistoryMovies(): Promise<{
         watchedAt: item.watchedAt,
         progress: item.progress,
         duration: item.duration,
-      })
+      }),
     );
 
     return {
@@ -199,7 +199,7 @@ export async function getWatchHistoryStats(): Promise<{
 
     const totalWatchTime = allHistory.reduce(
       (sum, item) => sum + item.progress,
-      0
+      0,
     );
     const completedMovies = allHistory.filter((item) => {
       if (item.duration === 0) return false;
@@ -290,7 +290,7 @@ export async function searchWatchHistory(query: string): Promise<{
         watchedAt: item.watchedAt,
         progress: item.progress,
         duration: item.duration,
-      })
+      }),
     );
 
     return {
@@ -360,7 +360,7 @@ export async function getWatchHistoryByMovie(movieId: string): Promise<{
         watchedAt: item.watchedAt,
         progress: item.progress,
         duration: item.duration,
-      })
+      }),
     );
 
     return {

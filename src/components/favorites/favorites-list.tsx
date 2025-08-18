@@ -18,7 +18,7 @@ export function FavoritesList({
   error: initialError,
 }: FavoritesListProps) {
   const [favorites, setFavorites] = useState<FavoriteMovie[]>(
-    initialData || []
+    initialData || [],
   );
   const [isLoading, setIsLoading] = useState(!initialData);
 

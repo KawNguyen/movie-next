@@ -48,7 +48,7 @@ const MovieCard = ({
               movieSlug={slug}
               movieName={name}
               posterUrl={poster_url}
-              className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              className="absolute top-3 left-3"
             />
           </AspectRatio>
         </CardHeader>

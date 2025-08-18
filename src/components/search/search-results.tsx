@@ -53,7 +53,7 @@ export function SearchResults({
 
       try {
         const url = `/api/tim-kiem?keyword=${encodeURIComponent(
-          query
+          query,
         )}&page=${page}`;
         const response = await fetch(url);
         if (!response.ok)
@@ -65,7 +65,7 @@ export function SearchResults({
           setAllMovies((prev) =>
             isLoadMore
               ? [...prev, ...(data.data?.items ?? [])]
-              : data.data?.items ?? []
+              : (data.data?.items ?? []),
           );
           setTotalItems(data.data.params?.pagination?.totalItems || 0);
           setCurrentPage(page);
@@ -84,7 +84,7 @@ export function SearchResults({
         setLoadingMore(false);
       }
     },
-    [query]
+    [query],
   );
 
   useEffect(() => {
@@ -112,7 +112,7 @@ export function SearchResults({
       {
         threshold: 0.1,
         rootMargin: isMobile ? "20px" : "10px",
-      }
+      },
     );
     const currentObserverRef = observerRef.current;
     if (currentObserverRef) observer.observe(currentObserverRef);

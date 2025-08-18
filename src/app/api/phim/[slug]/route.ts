@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ slug: string }> }
+  { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params;
 
@@ -11,7 +11,7 @@ export async function GET(
     if (!response.ok) {
       return NextResponse.json(
         { error: "Error fetching data" },
-        { status: response.status }
+        { status: response.status },
       );
     }
     const data = await response.json();
@@ -19,7 +19,7 @@ export async function GET(
   } catch (err: unknown) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Unknown error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

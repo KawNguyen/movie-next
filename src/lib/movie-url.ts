@@ -31,7 +31,7 @@ export const getServerDisplayName = (serverName: string) => {
 export const buildMovieUrl = (
   baseSlug: string,
   episode?: number,
-  server?: string
+  server?: string,
 ): string => {
   const params = new URLSearchParams();
 

@@ -98,7 +98,7 @@ export function VideoPlayer({
     video.load();
 
     const currentEpisodeData = selectedServer.server_data.find(
-      (ep) => ep.slug === selectedEpisode.slug
+      (ep) => ep.slug === selectedEpisode.slug,
     );
 
     if (!currentEpisodeData || !currentEpisodeData.link_m3u8) {
@@ -165,10 +165,10 @@ export function VideoPlayer({
               video.currentTime = savedProgress;
               toast.success(
                 `Tiếp tục từ ${Math.floor(savedProgress / 60)}:${Math.floor(
-                  savedProgress % 60
+                  savedProgress % 60,
                 )
                   .toString()
-                  .padStart(2, "0")}`
+                  .padStart(2, "0")}`,
               );
             }, 500);
           }
@@ -205,10 +205,10 @@ export function VideoPlayer({
               video.currentTime = savedProgress;
               toast.success(
                 `Tiếp tục từ ${Math.floor(savedProgress / 60)}:${Math.floor(
-                  savedProgress % 60
+                  savedProgress % 60,
                 )
                   .toString()
-                  .padStart(2, "0")}`
+                  .padStart(2, "0")}`,
               );
             }, 500);
           }

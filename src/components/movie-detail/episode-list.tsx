@@ -72,7 +72,7 @@ export function EpisodeList({
     if (!currentServer) return selectedServer;
 
     const serverIndex = episodes.findIndex(
-      (server) => getServerSlug(server.server_name) === currentServer
+      (server) => getServerSlug(server.server_name) === currentServer,
     );
     return serverIndex >= 0 ? serverIndex : selectedServer;
   };
@@ -125,7 +125,7 @@ export function EpisodeList({
           <TabsList className="flex w-full grid-cols-2 mb-2">
             {episodes.map((server, index) => {
               const { name, icon: Icon } = getServerDisplayName(
-                server.server_name
+                server.server_name,
               );
               return (
                 <TabsTrigger
@@ -180,13 +180,13 @@ export function EpisodeList({
 
                           setIsChanging(true);
                           const params = new URLSearchParams(
-                            searchParams.toString()
+                            searchParams.toString(),
                           );
                           params.set("tap", tapNumber.toString());
 
                           // Đảm bảo server param được set đúng
                           const serverSlug = getServerSlug(
-                            episodes[serverIndex].server_name
+                            episodes[serverIndex].server_name,
                           );
                           params.set("server", serverSlug);
 

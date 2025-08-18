@@ -70,8 +70,7 @@ export function FavoriteMovieCard({
 
   return (
     <Card
-      className="group border-1 p-0 overflow-hidden transition-all duration-300 hover:-translate-y-2 relative 
-                     flex flex-col md:flex-row md:h-40"
+      className="group border-1 p-0 overflow-hidden transition-all duration-300 hover:-translate-y-2 relative flex flex-col md:flex-row md:h-40"
     >
       {/* Mobile: Vertical Layout | Desktop: Left side image */}
       <Link
@@ -100,23 +99,14 @@ export function FavoriteMovieCard({
       </Link>
 
       {/* Mobile: Bottom content | Desktop: Right side content */}
-      <CardContent
-        className="p-2 sm:p-3 text-center sm:text-left 
-                              md:flex-1 md:flex md:flex-col md:justify-between md:text-left"
-      >
+      <CardContent className="p-2 sm:p-3 text-center sm:text-left md:flex-1 md:flex md:flex-col md:justify-between md:text-left">
         <div>
           <Link href={`/phim/${movieSlug}`}>
-            <h3
-              className="font-semibold text-md md:text-lg mb-2 line-clamp-2 
-                          group-hover:text-primary transition-colors md:line-clamp-3"
-            >
+            <h3 className="font-semibold text-md md:text-lg mb-2 line-clamp-2 group-hover:text-primary transition-colors md:line-clamp-3">
               {movieName}
             </h3>
           </Link>
-          <div
-            className="flex items-center justify-between text-sm text-muted-foreground mb-2 
-                          md:flex-col md:items-start md:gap-2"
-          >
+          <div className="flex items-center justify-between text-sm text-muted-foreground mb-2 md:flex-col md:items-start md:gap-2">
             <div className="flex items-center gap-1">
               <Calendar className="w-4 h-4" />
               {formatDate(new Date(createdAt))}
@@ -134,8 +124,7 @@ export function FavoriteMovieCard({
       <Button
         size="sm"
         variant="destructive"
-        className="absolute top-2 right-2 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity
-                   md:relative md:opacity-100 md:m-2 md:self-start md:hover:opacity-100"
+        className="absolute top-2 right-2 h-8 w-8 p-0"
         onClick={handleRemove}
         disabled={isPending}
       >

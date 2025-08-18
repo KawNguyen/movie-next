@@ -8,7 +8,7 @@ export async function GET(request: Request) {
     const page = searchParams.get("page") || "1";
 
     const response = await axios.get(
-      `${API_URL}/danh-sach/phim-moi-cap-nhat-v3?page=${page}`
+      `${API_URL}/danh-sach/phim-moi-cap-nhat-v3?page=${page}`,
     );
     return Response.json(response.data);
   } catch (error) {

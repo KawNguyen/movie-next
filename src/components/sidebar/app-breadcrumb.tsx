@@ -61,7 +61,7 @@ function formatTitle(slug: string): string {
     .map((word) =>
       word.toUpperCase() === word && word.length <= 4
         ? word
-        : word.charAt(0).toUpperCase() + word.slice(1)
+        : word.charAt(0).toUpperCase() + word.slice(1),
     )
     .join(" ");
 }

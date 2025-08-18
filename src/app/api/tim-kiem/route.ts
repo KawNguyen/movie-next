@@ -35,10 +35,9 @@ export async function GET(request: NextRequest) {
           status: false,
           msg: "Keyword parameter is required",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
-
 
     const queryParams = new URLSearchParams();
 
@@ -80,7 +79,7 @@ export async function GET(request: NextRequest) {
         msg: "Internal server error",
         error: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

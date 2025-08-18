@@ -84,7 +84,11 @@ export function ContinueWatchingSection() {
               : `/phim/${item.movieSlug}`;
 
             return (
-              <Link key={item.id} href={episodeUrl} className="border rounded-lg">
+              <Link
+                key={item.id}
+                href={episodeUrl}
+                className="border rounded-lg"
+              >
                 <div className="group relative min-w-[220px] rounded-lg bg-card hover:bg-card/80 transition-colors overflow-hidden">
                   <div className="aspect-video relative">
                     <Image

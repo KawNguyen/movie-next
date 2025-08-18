@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import { Movie } from "@/types/movie-detail.types"
-import { Star } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Movie } from "@/types/movie-detail.types";
+import { Star } from "lucide-react";
 
 interface MovieStatsProps {
-  movie: Movie
+  movie: Movie;
 }
 
 export function MovieStats({ movie }: MovieStatsProps) {
@@ -50,5 +50,5 @@ export function MovieStats({ movie }: MovieStatsProps) {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

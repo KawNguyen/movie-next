@@ -13,7 +13,7 @@ export const formatWatchTime = (seconds: number): string => {
 
 export const formatWatchProgress = (
   progress: number,
-  duration: number
+  duration: number,
 ): string => {
   if (duration === 0) return "0%";
   const percent = Math.round((progress / duration) * 100);
@@ -22,7 +22,7 @@ export const formatWatchProgress = (
 
 export const getProgressPercent = (
   progress: number,
-  duration: number
+  duration: number,
 ): number => {
   if (duration === 0) return 0;
   return Math.min((progress / duration) * 100, 100);
@@ -30,7 +30,7 @@ export const getProgressPercent = (
 
 export const isWatchCompleted = (
   progress: number,
-  duration: number
+  duration: number,
 ): boolean => {
   const percent = getProgressPercent(progress, duration);
   return percent >= 90; // Coi như hoàn thành nếu xem >= 90%
@@ -38,7 +38,7 @@ export const isWatchCompleted = (
 
 export const shouldShowInContinueWatching = (
   progress: number,
-  duration: number
+  duration: number,
 ): boolean => {
   const percent = getProgressPercent(progress, duration);
   return percent > 5 && percent < 90; // Hiển thị nếu xem > 5% và < 90%

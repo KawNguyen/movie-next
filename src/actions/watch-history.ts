@@ -100,7 +100,7 @@ export async function getWatchHistory() {
 
 export async function removeFromWatchHistory(
   movieId: string,
-  episodeId?: string
+  episodeId?: string,
 ) {
   try {
     // Get current session
@@ -128,7 +128,7 @@ export async function removeFromWatchHistory(
 
     if (!existingRecord) {
       console.warn(
-        "Exact watch history record not found. Trying to delete all records for this movie..."
+        "Exact watch history record not found. Trying to delete all records for this movie...",
       );
 
       // Fallback: Delete tất cả records của movie này cho user

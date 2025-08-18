@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Movie } from "@/types/movie-detail.types"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Movie } from "@/types/movie-detail.types";
 
 interface MovieInfoProps {
-  movie: Movie
+  movie: Movie;
 }
 
 export function MovieInfo({ movie }: MovieInfoProps) {
@@ -17,5 +17,5 @@ export function MovieInfo({ movie }: MovieInfoProps) {
         <p className="text-muted-foreground leading-relaxed">{movie.content}</p>
       </CardContent>
     </Card>
-  )
+  );
 }

@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatNumber } from "@/lib/utils";
+import { useEffect, useState } from "react";
 
 interface PaginationProps {
   currentPage: number;
@@ -27,10 +28,21 @@ export default function Pagination({
   onPageChange,
   loading = false,
 }: PaginationProps) {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkScreen = () => setIsMobile(window.innerWidth < 640);
+    checkScreen();
+    window.addEventListener("resize", checkScreen);
+    return () => window.removeEventListener("resize", checkScreen);
+  }, []);
+
   const getPageNumbers = () => {
-    const delta = 2;
-    const range = [];
-    const rangeWithDots = [];
+    const delta = isMobile ? 1 : 2; // 👈 mobile hiển thị ít số hơn
+    const range: (number | string)[] = [];
+    const rangeWithDots: (number | string)[] = [];
+
+    range.push(1);
 
     for (
       let i = Math.max(2, currentPage - delta);
@@ -40,18 +52,21 @@ export default function Pagination({
       range.push(i);
     }
 
-    if (currentPage - delta > 2) {
-      rangeWithDots.push(1, "...");
-    } else {
-      rangeWithDots.push(1);
+    if (totalPages > 1) {
+      range.push(totalPages);
     }
 
-    rangeWithDots.push(...range);
-
-    if (currentPage + delta < totalPages - 1) {
-      rangeWithDots.push("...", totalPages);
-    } else {
-      rangeWithDots.push(totalPages);
+    let l: number | undefined = undefined;
+    for (const i of range) {
+      if (l !== undefined) {
+        if ((i as number) - l === 2) {
+          rangeWithDots.push(l + 1);
+        } else if ((i as number) - l !== 1) {
+          rangeWithDots.push("...");
+        }
+      }
+      rangeWithDots.push(i);
+      l = i as number;
     }
 
     return rangeWithDots;
@@ -69,19 +84,21 @@ export default function Pagination({
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mt-6 ">
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mt-6">
+      {/* Thông tin tổng số phim */}
       <div className="text-sm text-muted-foreground order-2 sm:order-1 text-center sm:text-left">
         Hiển thị {startItem} - {endItem} trong tổng số{" "}
         {formatNumber(totalItems)} phim
       </div>
 
+      {/* Pagination */}
       <div className="flex items-center justify-center gap-1 order-1 sm:order-2">
         <Button
           variant="outline"
           size="sm"
           onClick={() => handlePageChange(1)}
           disabled={currentPage === 1 || loading}
-          className="h-9 w-9 p-0 hidden sm:inline-flex"
+          className="h-8 w-8 sm:h-9 sm:w-9 p-0"
           title="Trang đầu"
         >
           <ChevronsLeft className="h-4 w-4" />
@@ -92,7 +109,7 @@ export default function Pagination({
           size="sm"
           onClick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage === 1 || loading}
-          className="h-9 w-9 p-0"
+          className="h-8 w-8 sm:h-9 sm:w-9 p-0"
           title="Trang trước"
         >
           <ChevronLeft className="h-4 w-4" />
@@ -100,14 +117,7 @@ export default function Pagination({
 
         <div className="flex items-center gap-1">
           {getPageNumbers().map((page, index) => (
-            <div
-              key={index}
-              className={
-                index > 0 && index < getPageNumbers().length - 1
-                  ? "hidden sm:block"
-                  : ""
-              }
-            >
+            <div key={index}>
               {page === "..." ? (
                 <Button
                   variant="ghost"
@@ -123,7 +133,7 @@ export default function Pagination({
                   size="sm"
                   onClick={() => handlePageChange(page as number)}
                   disabled={loading}
-                  className="h-9 w-9 p-0"
+                  className="h-8 w-8 sm:h-9 sm:w-9 p-0 text-xs"
                   title={`Trang ${page}`}
                 >
                   {page}
@@ -138,7 +148,7 @@ export default function Pagination({
           size="sm"
           onClick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage === totalPages || loading}
-          className="h-9 w-9 p-0"
+          className="h-8 w-8 sm:h-9 sm:w-9 p-0"
           title="Trang sau"
         >
           <ChevronRight className="h-4 w-4" />
@@ -149,17 +159,11 @@ export default function Pagination({
           size="sm"
           onClick={() => handlePageChange(totalPages)}
           disabled={currentPage === totalPages || loading}
-          className="h-9 w-9 p-0 hidden sm:inline-flex"
+          className="h-8 w-8 sm:h-9 sm:w-9 p-0"
           title="Trang cuối"
         >
           <ChevronsRight className="h-4 w-4" />
         </Button>
-      </div>
-
-      <div className="sm:hidden order-3 text-center">
-        <span className="text-sm text-muted-foreground">
-          Trang {currentPage} / {totalPages}
-        </span>
       </div>
     </div>
   );

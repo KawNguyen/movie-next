@@ -5,7 +5,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
+  { params }: { params: Promise<{ slug: string }> },
 ) {
   try {
     const { slug } = await params;
@@ -31,7 +31,7 @@ export async function GET(
     if (limit) queryParams.append("limit", limit);
 
     const response = await axios.get(
-      `${API_URL}/v1/api/the-loai/${slug}?${queryParams.toString()}`
+      `${API_URL}/v1/api/the-loai/${slug}?${queryParams.toString()}`,
     );
 
     return NextResponse.json(response.data);
@@ -39,7 +39,7 @@ export async function GET(
     console.error("Error fetching thể loại data:", error);
     return NextResponse.json(
       { error: "Failed to fetch thể loại data" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

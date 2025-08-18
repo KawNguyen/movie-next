@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Movie } from "@/types/movie-detail.types"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Movie } from "@/types/movie-detail.types";
 
 interface CastCrewProps {
-  movie: Movie
+  movie: Movie;
 }
 
 export function CastCrew({ movie }: CastCrewProps) {
@@ -41,5 +41,5 @@ export function CastCrew({ movie }: CastCrewProps) {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

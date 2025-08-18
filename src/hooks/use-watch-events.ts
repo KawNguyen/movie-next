@@ -67,7 +67,15 @@ export function useWatchEvents({
         console.error("Error starting watch:", error);
       }
     },
-    [movieId, movieSlug, movieName, posterUrl, thumbUrl, episodeId, episodeName]
+    [
+      movieId,
+      movieSlug,
+      movieName,
+      posterUrl,
+      thumbUrl,
+      episodeId,
+      episodeName,
+    ],
   );
 
   // Cập nhật tiến độ (throttled)
@@ -108,7 +116,15 @@ export function useWatchEvents({
         }
       }, 2000);
     },
-    [movieId, movieSlug, movieName, posterUrl, thumbUrl, episodeId, episodeName]
+    [
+      movieId,
+      movieSlug,
+      movieName,
+      posterUrl,
+      thumbUrl,
+      episodeId,
+      episodeName,
+    ],
   );
 
   // Hoàn thành xem
@@ -137,7 +153,15 @@ export function useWatchEvents({
         console.error("Error completing watch:", error);
       }
     },
-    [movieId, movieSlug, movieName, posterUrl, thumbUrl, episodeId, episodeName]
+    [
+      movieId,
+      movieSlug,
+      movieName,
+      posterUrl,
+      thumbUrl,
+      episodeId,
+      episodeName,
+    ],
   );
 
   // Tạm dừng xem
@@ -164,7 +188,15 @@ export function useWatchEvents({
         console.error("Error pausing watch:", error);
       }
     },
-    [movieId, movieSlug, movieName, posterUrl, thumbUrl, episodeId, episodeName]
+    [
+      movieId,
+      movieSlug,
+      movieName,
+      posterUrl,
+      thumbUrl,
+      episodeId,
+      episodeName,
+    ],
   );
 
   // Tiếp tục xem
@@ -191,7 +223,15 @@ export function useWatchEvents({
         console.error("Error resuming watch:", error);
       }
     },
-    [movieId, movieSlug, movieName, posterUrl, thumbUrl, episodeId, episodeName]
+    [
+      movieId,
+      movieSlug,
+      movieName,
+      posterUrl,
+      thumbUrl,
+      episodeId,
+      episodeName,
+    ],
   );
 
   // Lấy tiến độ đã lưu

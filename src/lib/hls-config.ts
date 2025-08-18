@@ -44,7 +44,7 @@ export const getOptimizedHlsConfig = (): Partial<Hls.Config> => {
  */
 export const handleHlsError = (
   hls: Hls,
-  data: { fatal: boolean; type: string; details?: string }
+  data: { fatal: boolean; type: string; details?: string },
 ): boolean => {
   if (!data.fatal) {
     // Non-fatal errors - log và continue

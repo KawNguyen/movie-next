@@ -24,7 +24,7 @@ const ShowContainer = ({
   initialData = null,
 }: MovieCategoryPageProps) => {
   const [movies, setMovies] = useState<MovieItem[]>(
-    initialData?.data?.items || []
+    initialData?.data?.items || [],
   );
   const [paginationData, setPaginationData] = useState<{
     totalItems: number;
@@ -93,7 +93,7 @@ const ShowContainer = ({
         });
 
         const response = await fetch(
-          `/api/${apiEndpoint}/${slug}?${queryParams.toString()}`
+          `/api/${apiEndpoint}/${slug}?${queryParams.toString()}`,
         );
 
         if (!response.ok) {
@@ -118,7 +118,7 @@ const ShowContainer = ({
         setLoading(false);
       }
     },
-    [slug, apiEndpoint]
+    [slug, apiEndpoint],
   );
 
   const handleFilterChange = async (newFilters: MovieListParams) => {
@@ -142,10 +142,10 @@ const ShowContainer = ({
       apiEndpoint === "danh-muc"
         ? "danh-muc"
         : apiEndpoint === "the-loai"
-        ? "the-loai"
-        : apiEndpoint === "quoc-gia"
-        ? "quoc-gia"
-        : "danh-muc";
+          ? "the-loai"
+          : apiEndpoint === "quoc-gia"
+            ? "quoc-gia"
+            : "danh-muc";
 
     const newUrl = queryParams.toString()
       ? `/${baseUrl}/${slug}?${queryParams.toString()}`

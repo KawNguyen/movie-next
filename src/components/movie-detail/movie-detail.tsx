@@ -27,7 +27,7 @@ interface MovieDetailProps {
 export default function MovieDetail({ slug, initialData }: MovieDetailProps) {
   const searchParams = useSearchParams();
   const [movieData, setMovieData] = useState<MovieDetailResponse | null>(
-    initialData || null
+    initialData || null,
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
           success: false,
           error: "Token không hợp lệ",
         } as ApiResponse<never>,
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
         success: false,
         error: "Lỗi server",
       } as ApiResponse<never>,
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

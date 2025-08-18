@@ -22,7 +22,7 @@ interface WatchEventData {
  */
 export async function sendWatchEvent(
   eventType: WatchEventType,
-  data: WatchEventData
+  data: WatchEventData,
 ) {
   try {
     // Validate essential data
@@ -143,7 +143,7 @@ export async function getContinueWatchingList(limit = 10) {
 
     const result = await WatchEventService.getContinueWatching(
       session.user.id,
-      limit
+      limit,
     );
 
     return {
@@ -179,7 +179,7 @@ export async function getCompletedWatchList(limit = 20) {
 
     const result = await WatchEventService.getCompletedWatch(
       session.user.id,
-      limit
+      limit,
     );
 
     return {
@@ -215,7 +215,7 @@ export async function getAllWatchHistoryList(limit = 50) {
 
     const result = await WatchEventService.getAllWatchHistory(
       session.user.id,
-      limit
+      limit,
     );
 
     return {
@@ -237,7 +237,7 @@ export async function getAllWatchHistoryList(limit = 50) {
  */
 export async function getWatchProgressForEpisode(
   movieId: string,
-  episodeId: string
+  episodeId: string,
 ) {
   try {
     // Validate parameters
@@ -275,11 +275,11 @@ export async function getWatchProgressForEpisode(
 
     const result = await WatchEventService.getAllWatchHistory(
       session.user.id,
-      1000
+      1000,
     );
     const episodeRecord = result.find(
       (record) =>
-        record.movieId === cleanMovieId && record.episodeId === cleanEpisodeId
+        record.movieId === cleanMovieId && record.episodeId === cleanEpisodeId,
     );
 
     return {

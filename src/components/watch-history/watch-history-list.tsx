@@ -31,7 +31,7 @@ export function WatchHistoryList({
       watchedAt: item.watchedAt,
       progress: item.progress,
       duration: item.duration,
-    })) || []
+    })) || [],
   );
   const [isLoading, setIsLoading] = useState(!initialData);
 

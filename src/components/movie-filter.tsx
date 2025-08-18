@@ -130,7 +130,7 @@ export default function MovieFilter({
                 <SelectItem value="all">Tất cả</SelectItem>
                 {Array.from(
                   { length: 10 },
-                  (_, i) => new Date().getFullYear() - i
+                  (_, i) => new Date().getFullYear() - i,
                 ).map((year) => (
                   <SelectItem key={year} value={year.toString()}>
                     {year}
@@ -157,7 +157,7 @@ export default function MovieFilter({
                     .filter((category) =>
                       currentSlug
                         ? category.url.split("/").pop() !== currentSlug
-                        : true
+                        : true,
                     )
                     .map((category) => (
                       <SelectItem
@@ -189,7 +189,7 @@ export default function MovieFilter({
                     .filter((country) =>
                       currentSlug
                         ? country.url.split("/").pop() !== currentSlug
-                        : true
+                        : true,
                     )
                     .map((country) => (
                       <SelectItem

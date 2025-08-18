@@ -37,11 +37,9 @@
 ## Khuyến nghị hành động:
 
 1. **Xóa ngay lập tức** (an toàn 100%):
-
    - `src/components/watch-history/continue-watching.tsx`
 
 2. **Có thể xóa** (nên kiểm tra kỹ trước):
-
    - `src/components/coming-soon.tsx`
    - `src/lib/coming-soon.ts`
    - `src/hooks/use-mobile.ts`

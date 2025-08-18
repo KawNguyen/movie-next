@@ -2,7 +2,7 @@ import MovieDetail from "@/components/movie-detail/movie-detail";
 import { MovieDetailResponse } from "@/types/movie-detail.types";
 
 async function fetchMovieData(
-  slug: string
+  slug: string,
 ): Promise<MovieDetailResponse | null> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
