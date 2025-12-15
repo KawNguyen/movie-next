@@ -78,15 +78,21 @@ export function NavUser() {
     return (
       <SidebarMenu>
         <SidebarMenuItem>
-          <Link href="/login">
-            <SidebarMenuButton size="lg">
-              <User className="h-8 w-8" />
+          <SidebarMenuButton
+            size="lg"
+            asChild
+            onClick={() => router.push("/login")}
+          >
+            <div>
+              <div className=" text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+                <User className="size-5" />
+              </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">Đăng nhập</span>
                 <span className="truncate text-xs">Truy cập tài khoản</span>
               </div>
-            </SidebarMenuButton>
-          </Link>
+            </div>
+          </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>
     );
