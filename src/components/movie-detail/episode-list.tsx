@@ -117,7 +117,7 @@ export function EpisodeList({
           </Badge>
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex h-full">
+      <CardContent className="flex">
         {isServerChanging && (
           <div className="mb-4 p-3 bg-muted rounded-lg flex items-center gap-2 text-sm">
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -153,7 +153,7 @@ export function EpisodeList({
 
           {episodes.map((server, serverIndex) => (
             <TabsContent key={serverIndex} value={serverIndex.toString()}>
-              <ScrollArea className="h-full w-full rounded-md border p-2">
+              <ScrollArea className="h-90 w-full rounded-md border p-2">
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
                   {server.server_data.map((episode, episodeIndex) => {
                     const tapNumber = episodeIndex + 1;
