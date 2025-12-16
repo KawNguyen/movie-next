@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Play, Loader2 } from "lucide-react";
+import { Play, Loader2, Clapperboard } from "lucide-react";
 import { Episode, Server } from "@/types/movie-detail.types";
 import { useEffect, useRef, useState, useCallback } from "react";
 import Hls from "hls.js";
@@ -98,7 +98,7 @@ export function VideoPlayer({
     video.load();
 
     const currentEpisodeData = selectedServer.server_data.find(
-      (ep) => ep.slug === selectedEpisode.slug,
+      (ep) => ep.slug === selectedEpisode.slug
     );
 
     if (!currentEpisodeData || !currentEpisodeData.link_m3u8) {
@@ -165,10 +165,10 @@ export function VideoPlayer({
               video.currentTime = savedProgress;
               toast.success(
                 `Tiếp tục từ ${Math.floor(savedProgress / 60)}:${Math.floor(
-                  savedProgress % 60,
+                  savedProgress % 60
                 )
                   .toString()
-                  .padStart(2, "0")}`,
+                  .padStart(2, "0")}`
               );
             }, 500);
           }
@@ -205,10 +205,10 @@ export function VideoPlayer({
               video.currentTime = savedProgress;
               toast.success(
                 `Tiếp tục từ ${Math.floor(savedProgress / 60)}:${Math.floor(
-                  savedProgress % 60,
+                  savedProgress % 60
                 )
                   .toString()
-                  .padStart(2, "0")}`,
+                  .padStart(2, "0")}`
               );
             }, 500);
           }
@@ -315,10 +315,13 @@ export function VideoPlayer({
 
   return (
     <VideoElementWrapper onCleanup={handleVideoCleanup}>
-      <Card>
+      <Card className="gap-2">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span>Đang xem: {selectedEpisode.name}</span>
+            <div className="flex items-end gap-1">
+              <Clapperboard className="size-5" />
+              <span>Đang xem: {selectedEpisode.name}</span>
+            </div>
             <Badge variant="outline">{selectedServer.server_name}</Badge>
           </CardTitle>
         </CardHeader>

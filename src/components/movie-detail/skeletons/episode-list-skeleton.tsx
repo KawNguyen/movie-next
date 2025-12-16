@@ -7,21 +7,21 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollText } from "lucide-react";
 
 export function EpisodeListSkeleton() {
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden h-full w-full">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>
-            <Skeleton className="h-6 w-40" />
-          </CardTitle>
-          <CardDescription className="flex items-center gap-2">
-            <Skeleton className="h-4 w-12" />
-            <span>•</span>
-            <Skeleton className="h-5 w-20" />
-          </CardDescription>
-        </div>
+        <CardTitle className="flex items-end gap-1">
+          <ScrollText className="size-5" />
+          Danh sách tập phim
+        </CardTitle>
+        <CardDescription className="flex items-center gap-2">
+          <Skeleton className="h-4 w-12" />
+          <span>•</span>
+          <Skeleton className="h-5 w-20" />
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex w-full mb-2 space-x-2">

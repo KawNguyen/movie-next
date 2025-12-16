@@ -2,6 +2,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Movie } from "@/types/movie-detail.types";
+import { ScrollArea } from "../ui/scroll-area";
+import { BookText } from "lucide-react";
 
 interface MovieInfoProps {
   movie: Movie;
@@ -9,12 +11,18 @@ interface MovieInfoProps {
 
 export function MovieInfo({ movie }: MovieInfoProps) {
   return (
-    <Card>
+    <Card className="gap-1">
       <CardHeader>
-        <CardTitle>Nội dung phim</CardTitle>
+        <CardTitle className="flex items-end gap-1">
+          <BookText className="size-5" /> Nội dung phim
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-muted-foreground leading-relaxed">{movie.content}</p>
+        <ScrollArea className="lg:h-40 pr-2">
+          <p className="text-muted-foreground leading-relaxed">
+            {movie.content}
+          </p>
+        </ScrollArea>
       </CardContent>
     </Card>
   );

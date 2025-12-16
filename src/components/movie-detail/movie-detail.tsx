@@ -140,17 +140,24 @@ export default function MovieDetail({ slug, initialData }: MovieDetailProps) {
       <div className="min-h-screen bg-background">
         <MovieHeroSkeleton />
 
-        <div className="max-w-7xl mx-auto ">
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8">
-            <div className="grid gap-8">
-              <VideoPlayerSkeleton />
-              <MovieInfoSkeleton />
-              <CastCrewSkeleton />
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 h-full w-full">
+              <div className="lg:col-span-4 col-span-1">
+                <VideoPlayerSkeleton />
+              </div>
+              <div className="lg:col-span-2 col-span-1 h-full">
+                <EpisodeListSkeleton />
+              </div>
             </div>
-
-            <div className="grid gap-8">
-              <EpisodeListSkeleton />
-              <MovieStatsSkeleton />
+            <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 h-full w-full">
+              <div className="grid lg:col-span-4 col-span-1 gap-4">
+                <MovieInfoSkeleton />
+                <CastCrewSkeleton />
+              </div>
+              <div className="lg:col-span-2 col-span-1 h-full">
+                <MovieStatsSkeleton />
+              </div>
             </div>
           </div>
         </div>

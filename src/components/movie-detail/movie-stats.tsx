@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Movie } from "@/types/movie-detail.types";
-import { Star } from "lucide-react";
+import { ReceiptText, Star } from "lucide-react";
 
 interface MovieStatsProps {
   movie: Movie;
@@ -11,9 +11,11 @@ interface MovieStatsProps {
 
 export function MovieStats({ movie }: MovieStatsProps) {
   return (
-    <Card>
+    <Card className="gap-4 h-full">
       <CardHeader>
-        <CardTitle>Thông tin chi tiết</CardTitle>
+        <CardTitle className="flex items-end gap-1">
+          <ReceiptText className="size-5" /> Thông tin chi tiết
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex justify-between">

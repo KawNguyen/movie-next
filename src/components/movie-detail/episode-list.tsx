@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Episode, Movie, Server } from "@/types/movie-detail.types";
-import { Headphones, Subtitles, Play, Loader2 } from "lucide-react";
+import { Headphones, Subtitles, Play, Loader2, ScrollText } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
@@ -72,7 +72,7 @@ export function EpisodeList({
     if (!currentServer) return selectedServer;
 
     const serverIndex = episodes.findIndex(
-      (server) => getServerSlug(server.server_name) === currentServer,
+      (server) => getServerSlug(server.server_name) === currentServer
     );
     return serverIndex >= 0 ? serverIndex : selectedServer;
   };
@@ -100,9 +100,12 @@ export function EpisodeList({
   };
 
   return (
-    <Card className="overflow-hidden h-full w-full">
-      <CardHeader>
-        <CardTitle className="text-lg">Danh sách tập phim</CardTitle>
+    <Card className="overflow-hidden h-full w-full gap-4">
+      <CardHeader className="gap-3">
+        <CardTitle className="flex items-end gap-1">
+          <ScrollText className="size-5" />
+          Danh sách tập phim
+        </CardTitle>
         <CardDescription className="flex items-center gap-2 text-sm">
           <span>{movie.episode_total} tập</span>
           <span>•</span>
@@ -114,7 +117,7 @@ export function EpisodeList({
           </Badge>
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex h-full">
         {isServerChanging && (
           <div className="mb-4 p-3 bg-muted rounded-lg flex items-center gap-2 text-sm">
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -125,7 +128,7 @@ export function EpisodeList({
           <TabsList className="flex w-full grid-cols-2 mb-2">
             {episodes.map((server, index) => {
               const { name, icon: Icon } = getServerDisplayName(
-                server.server_name,
+                server.server_name
               );
               return (
                 <TabsTrigger
@@ -150,7 +153,7 @@ export function EpisodeList({
 
           {episodes.map((server, serverIndex) => (
             <TabsContent key={serverIndex} value={serverIndex.toString()}>
-              <ScrollArea className="h-[350px] w-full rounded-md border p-2">
+              <ScrollArea className="h-full w-full rounded-md border p-2">
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
                   {server.server_data.map((episode, episodeIndex) => {
                     const tapNumber = episodeIndex + 1;
@@ -180,13 +183,13 @@ export function EpisodeList({
 
                           setIsChanging(true);
                           const params = new URLSearchParams(
-                            searchParams.toString(),
+                            searchParams.toString()
                           );
                           params.set("tap", tapNumber.toString());
 
                           // Đảm bảo server param được set đúng
                           const serverSlug = getServerSlug(
-                            episodes[serverIndex].server_name,
+                            episodes[serverIndex].server_name
                           );
                           params.set("server", serverSlug);
 

@@ -1,36 +1,55 @@
+"use client";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 export function MovieStatsSkeleton() {
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader>
-        <CardTitle>
-          <Skeleton className="h-6 w-32" />
-        </CardTitle>
+        <CardTitle>Thông tin chi tiết</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Stats grid */}
-        <div className="grid grid-cols-2 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div
-              key={i}
-              className="text-center p-4 bg-muted/50 rounded-lg space-y-2"
-            >
-              <Skeleton className="h-6 w-8 mx-auto" />
-              <Skeleton className="h-4 w-16 mx-auto" />
-            </div>
-          ))}
-        </div>
+        <div className="space-y-3">
+          <div className="flex justify-between">
+            <Skeleton className="h-5 w-28" />
+            <Skeleton className="h-5 w-20" />
+          </div>
 
-        {/* Additional info */}
-        <div className="space-y-3 pt-4 border-t">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="flex justify-between items-center">
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-4 w-24" />
-            </div>
-          ))}
+          <Separator />
+
+          <div className="flex justify-between">
+            <Skeleton className="h-5 w-28" />
+            <Skeleton className="h-5 w-20" />
+          </div>
+
+          <Separator />
+
+          <div className="flex justify-between">
+            <Skeleton className="h-5 w-28" />
+            <Skeleton className="h-5 w-20" />
+          </div>
+          <Separator />
+
+          <div className="flex justify-between">
+            <Skeleton className="h-5 w-28" />
+            <Skeleton className="h-5 w-20" />
+          </div>
+
+          <Separator />
+
+          <div className="flex justify-between">
+            <Skeleton className="h-5 w-28" />
+            <Skeleton className="h-5 w-20" />
+          </div>
+
+          <Separator />
+
+          <div className="flex justify-between items-center">
+            <Skeleton className="h-6 w-28" />
+            <Skeleton className="h-5 w-20" />
+          </div>
         </div>
       </CardContent>
     </Card>
