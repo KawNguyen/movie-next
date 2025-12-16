@@ -100,7 +100,7 @@ export function EpisodeList({
   };
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden h-full w-full">
       <CardHeader>
         <CardTitle className="text-lg">Danh sách tập phim</CardTitle>
         <CardDescription className="flex items-center gap-2 text-sm">

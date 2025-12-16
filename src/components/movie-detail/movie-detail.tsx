@@ -27,7 +27,7 @@ interface MovieDetailProps {
 export default function MovieDetail({ slug, initialData }: MovieDetailProps) {
   const searchParams = useSearchParams();
   const [movieData, setMovieData] = useState<MovieDetailResponse | null>(
-    initialData || null,
+    initialData || null
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -189,38 +189,44 @@ export default function MovieDetail({ slug, initialData }: MovieDetailProps) {
         <MovieHero movie={movie} />
 
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8">
-            <div className="grid gap-8">
-              {selectedEpisode && (
-                <VideoPlayer
-                  key={`${selectedEpisode.slug}-${selectedServer}`}
-                  selectedEpisode={selectedEpisode}
-                  selectedServer={episodes[selectedServer]}
-                  movieId={movie._id}
-                  movieSlug={movie.slug}
-                  movieName={movie.name}
-                  posterUrl={movie.poster_url}
-                  thumbUrl={movie.thumb_url}
-                />
-              )}
-
-              <MovieInfo movie={movie} />
-
-              <CastCrew movie={movie} />
+          <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 h-full w-full">
+              <div className="lg:col-span-4 col-span-1">
+                {selectedEpisode && (
+                  <VideoPlayer
+                    key={`${selectedEpisode.slug}-${selectedServer}`}
+                    selectedEpisode={selectedEpisode}
+                    selectedServer={episodes[selectedServer]}
+                    movieId={movie._id}
+                    movieSlug={movie.slug}
+                    movieName={movie.name}
+                    posterUrl={movie.poster_url}
+                    thumbUrl={movie.thumb_url}
+                  />
+                )}
+              </div>
+              <div className="lg:col-span-2 col-span-1">
+                {selectedEpisode && (
+                  <EpisodeList
+                    movie={movie}
+                    episodes={episodes}
+                    selectedEpisode={selectedEpisode}
+                    selectedServer={selectedServer}
+                    onEpisodeSelect={handleEpisodeSelect}
+                  />
+                )}
+              </div>
             </div>
 
-            <div className="grid gap-8">
-              {selectedEpisode && (
-                <EpisodeList
-                  movie={movie}
-                  episodes={episodes}
-                  selectedEpisode={selectedEpisode}
-                  selectedServer={selectedServer}
-                  onEpisodeSelect={handleEpisodeSelect}
-                />
-              )}
+            <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 h-full w-full">
+              <div className="grid col-span-1 lg:col-span-4 gap-4">
+                <MovieInfo movie={movie} />
 
-              <MovieStats movie={movie} />
+                <CastCrew movie={movie} />
+              </div>
+              <div className="col-span-1 lg:col-span-2">
+                <MovieStats movie={movie} />
+              </div>
             </div>
           </div>
         </div>
