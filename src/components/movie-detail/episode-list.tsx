@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Episode, Movie, Server } from "@/types/movie-detail.types";
 import { Headphones, Subtitles, Play, Loader2, ScrollText } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface EpisodeListProps {
   movie: Movie;
@@ -79,7 +79,12 @@ export function EpisodeList({
 
   const activeServerIndex = getCurrentServerIndex();
 
+  useEffect(() => {
+    setIsServerChanging(false);
+  }, [episodes]);
+
   const handleServerChange = (serverIndex: number) => {
+    if (serverIndex === activeServerIndex) return;
     setIsServerChanging(true);
     const params = new URLSearchParams(searchParams.toString());
     const serverSlug = getServerSlug(episodes[serverIndex].server_name);
@@ -118,12 +123,6 @@ export function EpisodeList({
         </CardDescription>
       </CardHeader>
       <CardContent className="flex">
-        {isServerChanging && (
-          <div className="mb-4 p-3 bg-muted rounded-lg flex items-center gap-2 text-sm">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span>Đang chuyển đổi phiên bản...</span>
-          </div>
-        )}
         <Tabs value={activeServerIndex.toString()} className="w-full">
           <TabsList className="flex w-full grid-cols-2 mb-2">
             {episodes.map((server, index) => {
@@ -140,11 +139,7 @@ export function EpisodeList({
                   onClick={() => handleServerChange(index)}
                   disabled={isServerChanging}
                 >
-                  {isServerChanging ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Icon className="w-4 h-4" />
-                  )}
+                  <Icon className="w-4 h-4" />
                   {name}
                 </TabsTrigger>
               );
@@ -153,23 +148,29 @@ export function EpisodeList({
 
           {episodes.map((server, serverIndex) => (
             <TabsContent key={serverIndex} value={serverIndex.toString()}>
-              <ScrollArea className="h-90 w-full rounded-md border p-2">
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
-                  {server.server_data.map((episode, episodeIndex) => {
-                    const tapNumber = episodeIndex + 1;
-                    const isSelected = currentTap
-                      ? parseInt(currentTap) === tapNumber &&
-                        activeServerIndex === serverIndex
-                      : selectedEpisode?.slug === episode.slug &&
-                        selectedServer === serverIndex;
+              {isServerChanging ? (
+                <div className="p-2 h-90 w-full bg-muted rounded-lg flex justify-center items-center gap-2 text-sm">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Đang chuyển đổi phiên bản...</span>
+                </div>
+              ) : (
+                <ScrollArea className="h-90 w-full rounded-md border p-2">
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                    {server.server_data.map((episode, episodeIndex) => {
+                      const tapNumber = episodeIndex + 1;
+                      const isSelected = currentTap
+                        ? parseInt(currentTap) === tapNumber &&
+                          activeServerIndex === serverIndex
+                        : selectedEpisode?.slug === episode.slug &&
+                          selectedServer === serverIndex;
 
-                    return (
-                      <Button
-                        key={episodeIndex}
-                        variant={isSelected ? "default" : "outline"}
-                        size="sm"
-                        disabled={isChanging || isSelected}
-                        className={`
+                      return (
+                        <Button
+                          key={episodeIndex}
+                          variant={isSelected ? "default" : "outline"}
+                          size="sm"
+                          disabled={isChanging || isSelected}
+                          className={`
                           h-10 p-2 text-xs font-medium transition-all duration-200
                           ${
                             isSelected
@@ -178,33 +179,34 @@ export function EpisodeList({
                           }
                           ${isChanging ? "opacity-50 cursor-not-allowed" : ""}
                         `}
-                        onClick={() => {
-                          if (isChanging) return;
+                          onClick={() => {
+                            if (isChanging) return;
 
-                          setIsChanging(true);
-                          const params = new URLSearchParams(
-                            searchParams.toString()
-                          );
-                          params.set("tap", tapNumber.toString());
+                            setIsChanging(true);
+                            const params = new URLSearchParams(
+                              searchParams.toString()
+                            );
+                            params.set("tap", tapNumber.toString());
 
-                          // Đảm bảo server param được set đúng
-                          const serverSlug = getServerSlug(
-                            episodes[serverIndex].server_name
-                          );
-                          params.set("server", serverSlug);
+                            // Đảm bảo server param được set đúng
+                            const serverSlug = getServerSlug(
+                              episodes[serverIndex].server_name
+                            );
+                            params.set("server", serverSlug);
 
-                          router.push(`?${params.toString()}`);
-                          onEpisodeSelect(episode, serverIndex);
+                            router.push(`?${params.toString()}`);
+                            onEpisodeSelect(episode, serverIndex);
 
-                          setTimeout(() => setIsChanging(false), 300);
-                        }}
-                      >
-                        <span className="truncate">{episode.name}</span>
-                      </Button>
-                    );
-                  })}
-                </div>
-              </ScrollArea>
+                            setTimeout(() => setIsChanging(false), 300);
+                          }}
+                        >
+                          <span className="truncate">{episode.name}</span>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
+              )}
             </TabsContent>
           ))}
         </Tabs>

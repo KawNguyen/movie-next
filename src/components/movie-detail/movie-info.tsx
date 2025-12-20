@@ -9,6 +9,21 @@ interface MovieInfoProps {
   movie: Movie;
 }
 
+function decodeHtmlEntities(text: string): string {
+  const entities: Record<string, string> = {
+    "&quot;": '"',
+    "&apos;": "'",
+    "&amp;": "&",
+    "&lt;": "<",
+    "&gt;": ">",
+  };
+
+  return text.replace(
+    /&quot;|&apos;|&amp;|&lt;|&gt;/g,
+    (match) => entities[match] || match
+  );
+}
+
 export function MovieInfo({ movie }: MovieInfoProps) {
   return (
     <Card className="gap-1">
@@ -20,7 +35,7 @@ export function MovieInfo({ movie }: MovieInfoProps) {
       <CardContent>
         <ScrollArea className="lg:h-40 pr-2">
           <p className="text-muted-foreground leading-relaxed">
-            {movie.content}
+            {decodeHtmlEntities(movie.content)}
           </p>
         </ScrollArea>
       </CardContent>
