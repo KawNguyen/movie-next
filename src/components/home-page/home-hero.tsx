@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/carousel";
 import { Skeleton } from "../ui/skeleton";
 import { useRouter } from "next/navigation";
+import { getImageUrl } from "@/lib/image";
 
 interface HomeHeroProps {
   movies: MovieItem[];
@@ -23,12 +24,6 @@ export default function HomeHeroCarousel({ movies }: HomeHeroProps) {
   const router = useRouter();
   const heroMovies = movies.slice(0, 5);
   const [imageErrorIndex, setImageErrorIndex] = useState<number | null>(null);
-
-  const getImageUrl = (imagePath: string) => {
-    if (!imagePath) return "/placeholder-movie.jpg";
-    if (imagePath.startsWith("http")) return imagePath;
-    return `https://phimimg.com/${imagePath}`;
-  };
 
   if (heroMovies.length === 0) {
     return (

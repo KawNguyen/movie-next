@@ -5,6 +5,7 @@ import { Star, Calendar, Clock } from "lucide-react";
 import { MovieItem } from "@/types/movie-list.types";
 import { AspectRatio } from "./ui/aspect-ratio";
 import Link from "next/link";
+import { getImageUrl } from "@/lib/image";
 
 const MovieCard = ({
   slug,
@@ -16,11 +17,6 @@ const MovieCard = ({
   category,
   priority = false,
 }: MovieItem & { priority?: boolean }) => {
-  const getImageUrl = (imagePath: string) => {
-    if (!imagePath) return "/placeholder-movie.jpg";
-    if (imagePath.startsWith("http")) return imagePath;
-    return `https://phimimg.com/${imagePath}`;
-  };
   return (
     <Card className="group border-1 p-0 overflow-hidden transition-all duration-300 hover:-translate-y-2">
       <Link href={`/phim/${slug}`}>

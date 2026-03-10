@@ -32,7 +32,7 @@ export const data = {
         { title: "Tv Shows", url: "/danh-muc/tv-shows" },
         { title: "Phim Vietsub", url: "/danh-muc/phim-vietsub" },
         { title: "Phim Thuyết Minh", url: "/danh-muc/phim-thuyet-minh" },
-        { title: "Phim Lòng Tiếng", url: "/danh-muc/phim-khac" },
+        { title: "Phim Lòng Tiếng", url: "/danh-muc/phim-long-tieng" },
       ],
     },
     {

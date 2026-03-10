@@ -18,6 +18,7 @@ import {
   MovieStatsSkeleton,
 } from "./skeletons";
 import Image from "next/image";
+import { getImageUrl } from "@/lib/image";
 
 interface MovieDetailProps {
   slug: string;
@@ -27,7 +28,7 @@ interface MovieDetailProps {
 export default function MovieDetail({ slug, initialData }: MovieDetailProps) {
   const searchParams = useSearchParams();
   const [movieData, setMovieData] = useState<MovieDetailResponse | null>(
-    initialData || null
+    initialData || null,
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -184,7 +185,7 @@ export default function MovieDetail({ slug, initialData }: MovieDetailProps) {
     <div className="relative">
       <div className="absolute inset-0 h-[60vh]">
         <Image
-          src={movie.thumb_url || "/placeholder.svg"}
+          src={getImageUrl(movie.poster_url) || "/placeholder.svg"}
           alt={movie.name}
           fill
           className="object-cover rounded-lg w-full h-[60vh] max-h-[66vh]"

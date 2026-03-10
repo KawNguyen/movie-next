@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Star, Calendar, Clock, Eye, Globe } from "lucide-react";
 import { Movie } from "@/types/movie-detail.types";
 import { FavoriteButtonSimple } from "@/components/favorites/favorite-button-simple";
+import { getImageUrl } from "@/lib/image";
 
 interface MovieHeroProps {
   movie: Movie;
@@ -19,7 +20,7 @@ export function MovieHero({ movie }: MovieHeroProps) {
           <div className="flex justify-center md:justify-start">
             <Card className="w-[200px] md:w-[300px] overflow-hidden p-0">
               <Image
-                src={movie.poster_url || "/placeholder.svg"}
+                src={getImageUrl(movie.poster_url) || "/placeholder.svg"}
                 alt={movie.name}
                 width={300}
                 height={450}
