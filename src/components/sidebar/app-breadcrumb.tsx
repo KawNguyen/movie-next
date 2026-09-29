@@ -50,6 +50,9 @@ function formatTitle(slug: string): string {
     "top-imdb": "Top IMDb",
     "phim-18": "Phim 18+",
     "tv-shows": "TV Shows",
+    "danh-muc": "Danh mục",
+    "the-loai": "Thể loại",
+    "quoc-gia": "Quốc gia",
   };
 
   if (specialCases[slug]) {

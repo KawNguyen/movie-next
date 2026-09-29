@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { MovieItem } from "@/types/movie-list.types";
+import { getImageUrl } from "@/lib/image";
 
 interface SearchCardItemProps {
   movie: MovieItem;
@@ -22,7 +23,7 @@ export function SearchCardItem({ movie, onClose }: SearchCardItemProps) {
           {/* Poster */}
           <div className="relative w-16 h-24 flex-shrink-0 rounded overflow-hidden">
             <Image
-              src={`https://phimimg.com/${movie.poster_url}`}
+              src={`${getImageUrl(movie.poster_url)}`}
               alt={movie.name}
               fill
               className="object-cover"
