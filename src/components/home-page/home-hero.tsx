@@ -57,7 +57,7 @@ export default function HomeHeroCarousel({ movies }: HomeHeroProps) {
                   </div>
                 ) : (
                   <Image
-                    src={getImageUrl(movie.poster_url || movie.thumb_url || "")}
+                    src={movie.poster_url}
                     alt={movie.name}
                     fill
                     priority={index === 0}

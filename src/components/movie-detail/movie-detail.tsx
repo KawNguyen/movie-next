@@ -185,7 +185,7 @@ export default function MovieDetail({ slug, initialData }: MovieDetailProps) {
     <div className="relative">
       <div className="absolute inset-0 h-[60vh]">
         <Image
-          src={getImageUrl(movie.poster_url) || "/placeholder.svg"}
+          src={movie.thumb_url || "/placeholder.svg"}
           alt={movie.name}
           fill
           className="object-cover rounded-lg w-full h-[60vh] max-h-[66vh]"

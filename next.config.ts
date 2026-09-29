@@ -1,31 +1,17 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   images: {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "phimimg.com",
+        hostname: "**",
       },
       {
-        protocol: "https",
-        hostname: "via.placeholder.com",
-      },
-      {
-        protocol: "https",
-        hostname: "img.phimapi.com",
-      },
-      {
-        protocol: "https",
-        hostname: "*.phimapi.com",
-      },
-      {
-        protocol: "https",
-        hostname: "phimapi.com",
+        protocol: "http",
+        hostname: "**",
       },
     ],
-    unoptimized: false,
   },
 };
 

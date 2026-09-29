@@ -1,11 +1,12 @@
 import MovieDetail from "@/components/movie-detail/movie-detail";
 import { MovieDetailResponse } from "@/types/movie-detail.types";
 
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+
 async function fetchMovieData(
   slug: string,
 ): Promise<MovieDetailResponse | null> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
     const res = await fetch(`${baseUrl}/api/phim/${slug}`);
 
     if (!res.ok) {

@@ -1,11 +1,17 @@
-export function getImageUrl(path: string | undefined | null): string {
+const baseUrl = process.env.NEXT_PUBLIC_API_IMAGE_URL;
+
+export function getImageUrl(
+  path: string | undefined | null,
+): string {
   if (!path) return "";
 
-  let url = path;
-  if (!path.startsWith("http://") && !path.startsWith("https://")) {
-    const cleanPath = path.startsWith("/") ? path.slice(1) : path;
-    url = `https://phimimg.com/${cleanPath}`;
+  // Đã là URL đầy đủ
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    return path;
   }
 
-  return `https://phimapi.com/image.php?url=${url}`;
+  // Là path tương đối
+  const cleanPath = path.startsWith("/") ? path.slice(1) : path;
+
+  return `${baseUrl}/${cleanPath}`;
 }

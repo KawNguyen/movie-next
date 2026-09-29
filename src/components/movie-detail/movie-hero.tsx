@@ -20,7 +20,7 @@ export function MovieHero({ movie }: MovieHeroProps) {
           <div className="flex justify-center md:justify-start">
             <Card className="w-[200px] md:w-[300px] overflow-hidden p-0">
               <Image
-                src={getImageUrl(movie.poster_url) || "/placeholder.svg"}
+                src={movie.poster_url || "/placeholder.svg"}
                 alt={movie.name}
                 width={300}
                 height={450}
