@@ -21,9 +21,9 @@ export default function MovieList({
   pagination,
 }: MovieListProps) {
   return (
-    <section className="">
-      <div className="container mx-auto md:px-4">
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 md:gap-6">
+    <section>
+      <div>
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-3 md:gap-6">
           {loading ? (
             <>
               {Array.from({ length: 10 }).map((_, index) => (

@@ -1,202 +1,187 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+
+import { Button } from "@/components/ui/button";
 import {
+  CategoryApiResponse,
   MovieItem,
   MovieListParams,
-  CategoryApiResponse,
 } from "@/types/movie-list.types";
-import MovieList from "./movie-list";
 import MovieFilter from "./movie-filter";
+import MovieList from "./movie-list";
 
-interface MovieCategoryPageProps {
+type Pagination = {
+  totalItems: number;
+  totalItemsPerPage: number;
+  currentPage: number;
+  totalPages: number;
+};
+
+interface ShowContainerProps {
   slug: string;
-  searchParams: { [key: string]: string | string[] | undefined };
-  apiEndpoint?: string;
+  apiEndpoint?: "danh-muc" | "the-loai" | "quoc-gia";
   initialData?: CategoryApiResponse | null;
+  // Giữ lại để các page cũ không lỗi type, nhưng không còn dùng:
+  // URL (useSearchParams) mới là nguồn dữ liệu duy nhất.
+  searchParams?: unknown;
 }
 
-const ShowContainer = ({
+const PAGE_TYPE = {
+  "the-loai": "genre",
+  "quoc-gia": "country",
+  "danh-muc": "category",
+} as const;
+
+function parseParams(sp: URLSearchParams): MovieListParams {
+  const num = (key: string) => {
+    const v = sp.get(key);
+    const n = v ? parseInt(v, 10) : NaN;
+    return Number.isNaN(n) ? undefined : n;
+  };
+
+  return {
+    page: num("page") ?? 1,
+    sort_field: (sp.get("sort_field") as MovieListParams["sort_field"]) ?? undefined,
+    sort_type: (sp.get("sort_type") as MovieListParams["sort_type"]) ?? undefined,
+    sort_lang: (sp.get("sort_lang") as MovieListParams["sort_lang"]) ?? undefined,
+    category: sp.get("category") ?? undefined,
+    country: sp.get("country") ?? undefined,
+    year: num("year"),
+    limit: num("limit"),
+  };
+}
+
+function toQueryString(params: MovieListParams, omitFirstPage: boolean) {
+  const q = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === "") return;
+    if (omitFirstPage && key === "page" && value === 1) return;
+    q.append(key, String(value));
+  });
+  return q.toString();
+}
+
+export default function ShowContainer({
   slug,
-  searchParams,
   apiEndpoint = "danh-muc",
   initialData = null,
-}: MovieCategoryPageProps) => {
+}: ShowContainerProps) {
+  const urlParams = useSearchParams();
+
+  // Nguồn dữ liệu duy nhất: URL. Back/Forward tự hoạt động.
+  const filters = useMemo(() => parseParams(urlParams), [urlParams]);
+  const requestKey = `${slug}?${toQueryString(filters, true)}`;
+
   const [movies, setMovies] = useState<MovieItem[]>(
-    initialData?.data?.items || [],
+    initialData?.data?.items ?? [],
   );
-  const [paginationData, setPaginationData] = useState<{
-    totalItems: number;
-    totalItemsPerPage: number;
-    currentPage: number;
-    totalPages: number;
-  } | null>(initialData?.data?.params?.pagination || null);
+  const [pagination, setPagination] = useState<Pagination | null>(
+    initialData?.data?.params?.pagination ?? null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const router = useRouter();
+  const abortRef = useRef<AbortController | null>(null);
+  // Dữ liệu từ server ứng với URL ban đầu => không cần fetch lại
+  const lastKeyRef = useRef<string | null>(initialData ? requestKey : null);
 
-  const getPageType = (): "category" | "country" | "genre" | "default" => {
-    switch (apiEndpoint) {
-      case "the-loai":
-        return "genre";
-      case "quoc-gia":
-        return "country";
-      case "danh-muc":
-        return "category";
-      default:
-        return "default";
-    }
-  };
-
-  const parseSearchParams = useCallback((): MovieListParams => {
-    return {
-      page: searchParams.page ? parseInt(searchParams.page as string) : 1,
-      sort_field: searchParams.sort_field as
-        | "time"
-        | "name"
-        | "year"
-        | "view"
-        | undefined,
-      sort_type: searchParams.sort_type as "desc" | "asc" | undefined,
-      sort_lang: searchParams.sort_lang as
-        | "cn"
-        | "en"
-        | "kr"
-        | "th"
-        | undefined,
-      category: searchParams.category as string,
-      country: searchParams.country as string,
-      year: searchParams.year
-        ? parseInt(searchParams.year as string)
-        : undefined,
-      limit: searchParams.limit
-        ? parseInt(searchParams.limit as string)
-        : undefined,
-    };
-  }, [searchParams]);
-
-  const [filters, setFilters] = useState<MovieListParams>(parseSearchParams());
-
-  const fetchMovies = useCallback(
+  const loadMovies = useCallback(
     async (params: MovieListParams) => {
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+
       try {
         setLoading(true);
         setError(null);
 
-        const queryParams = new URLSearchParams();
-        Object.entries(params).forEach(([key, value]) => {
-          if (value !== undefined && value !== null && value !== "") {
-            queryParams.append(key, value.toString());
-          }
-        });
-
-        const response = await fetch(
-          `/api/${apiEndpoint}/${slug}?${queryParams.toString()}`,
+        const res = await fetch(
+          `/api/${apiEndpoint}/${slug}?${toQueryString(params, false)}`,
+          { signal: controller.signal },
         );
+        if (!res.ok) throw new Error("Không thể tải danh sách phim");
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch movies");
-        }
+        const json: CategoryApiResponse = await res.json();
+        const ok =
+          (json.status === "success" || json.status === true) && json.data;
+        if (!ok) throw new Error(json.msg || "API trả về lỗi");
 
-        const data: CategoryApiResponse = await response.json();
-
-        if (
-          (data.status === "success" && data.data) ||
-          (data.status === true && data.data)
-        ) {
-          setMovies(data.data.items);
-          setPaginationData(data.data.params.pagination);
-        } else {
-          throw new Error(data.msg || "API returned error status");
-        }
+        setMovies(json.data.items);
+        setPagination(json.data.params.pagination);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-        console.error("Error fetching movies:", err);
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        setError(err instanceof Error ? err.message : "Đã có lỗi xảy ra");
       } finally {
-        setLoading(false);
+        if (abortRef.current === controller) setLoading(false);
       }
     },
-    [slug, apiEndpoint],
+    [apiEndpoint, slug],
   );
 
-  const handleFilterChange = async (newFilters: MovieListParams) => {
-    setFilters(newFilters);
-    await fetchMovies(newFilters);
+  // URL đổi => fetch (bỏ qua lần đầu vì đã có initialData)
+  useEffect(() => {
+    if (lastKeyRef.current === requestKey) return;
+    lastKeyRef.current = requestKey;
+    loadMovies(filters);
+  }, [requestKey, filters, loadMovies]);
 
-    // Cập nhật URL sau khi fetch thành công
-    const queryParams = new URLSearchParams();
-    Object.entries(newFilters).forEach(([key, value]) => {
-      if (
-        value !== undefined &&
-        value !== null &&
-        value !== "" &&
-        value !== 1
-      ) {
-        queryParams.append(key, value.toString());
-      }
-    });
+  // Huỷ request đang chạy khi rời trang
+  useEffect(() => () => abortRef.current?.abort(), []);
 
-    const baseUrl =
-      apiEndpoint === "danh-muc"
-        ? "danh-muc"
-        : apiEndpoint === "the-loai"
-          ? "the-loai"
-          : apiEndpoint === "quoc-gia"
-            ? "quoc-gia"
-            : "danh-muc";
+  // Chỉ việc đổi URL, effect phía trên lo phần fetch
+  const updateUrl = useCallback(
+    (next: MovieListParams) => {
+      const qs = toQueryString(next, true);
+      window.history.pushState(
+        null,
+        "",
+        qs ? `/${apiEndpoint}/${slug}?${qs}` : `/${apiEndpoint}/${slug}`,
+      );
+    },
+    [apiEndpoint, slug],
+  );
 
-    const newUrl = queryParams.toString()
-      ? `/${baseUrl}/${slug}?${queryParams.toString()}`
-      : `/${baseUrl}/${slug}`;
-
-    router.push(newUrl, { scroll: false });
+  const handlePageChange = (page: number) => {
+    updateUrl({ ...filters, page });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
-
-  const handlePageChange = (newPage: number) => {
-    const newFilters = { ...filters, page: newPage };
-    handleFilterChange(newFilters);
-  };
-
-  if (error) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-500 mb-4">Lỗi</h1>
-          <p className="text-muted-foreground">{error}</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
       <MovieFilter
-        onFilterChange={handleFilterChange}
+        onFilterChange={updateUrl}
         loading={loading}
         initialFilters={filters}
-        pageType={getPageType()}
+        pageType={PAGE_TYPE[apiEndpoint] ?? "default"}
         currentSlug={slug}
       />
 
-      <MovieList
-        loading={loading}
-        movies={movies}
-        pagination={
-          paginationData
-            ? {
-                currentPage: paginationData.currentPage,
-                totalPages: paginationData.totalPages,
-                totalItems: paginationData.totalItems,
-                itemsPerPage: paginationData.totalItemsPerPage,
-                onPageChange: handlePageChange,
-              }
-            : undefined
-        }
-      />
+      {error ? (
+        <div className="py-10 text-center">
+          <p className="mb-4 text-sm text-red-500">{error}</p>
+          <Button variant="outline" size="sm" onClick={() => loadMovies(filters)}>
+            Thử lại
+          </Button>
+        </div>
+      ) : (
+        <MovieList
+          loading={loading}
+          movies={movies}
+          pagination={
+            pagination
+              ? {
+                  currentPage: pagination.currentPage,
+                  totalPages: pagination.totalPages,
+                  totalItems: pagination.totalItems,
+                  itemsPerPage: pagination.totalItemsPerPage,
+                  onPageChange: handlePageChange,
+                }
+              : undefined
+          }
+        />
+      )}
     </div>
   );
-};
-
-export default ShowContainer;
+}

@@ -1,6 +1,8 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+export const NAME_MOVIE_SESSION_KEY = "name-movie-session";
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }

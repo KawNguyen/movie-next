@@ -4,8 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Star, Calendar, Clock } from "lucide-react";
 import { MovieItem } from "@/types/movie-list.types";
 import { AspectRatio } from "./ui/aspect-ratio";
-import Link from "next/link";
 import { getImageUrl } from "@/lib/image";
+import MovieLink from "./movie-link";
 
 const MovieCard = ({
   slug,
@@ -19,7 +19,12 @@ const MovieCard = ({
 }: MovieItem & { priority?: boolean }) => {
   return (
     <Card className="group border-1 p-0 overflow-hidden transition-all duration-300 hover:-translate-y-2">
-      <Link href={`/phim/${slug}`}>
+      <MovieLink
+        href={`/phim/${slug}`}
+        slug={slug}
+        name={name}
+        className="block"
+      >
         <CardHeader className="p-0">
           <AspectRatio
             ratio={2 / 3}
@@ -62,7 +67,7 @@ const MovieCard = ({
             ))}
           </div>
         </CardContent>
-      </Link>
+      </MovieLink>
     </Card>
   );
 };

@@ -16,7 +16,7 @@ export async function GET(
     const sortLang = searchParams.get("sort_lang") || "";
     const country = searchParams.get("country") || "";
     const year = searchParams.get("year") || "";
-    const limit = searchParams.get("limit") || "10";
+    const limit = searchParams.get("limit") || "24";
 
     // Build query parameters
     const queryParams = new URLSearchParams({
