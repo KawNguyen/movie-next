@@ -149,7 +149,7 @@ export default function ShowContainer({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4">
       <MovieFilter
         onFilterChange={updateUrl}
         loading={loading}

@@ -1,216 +1,156 @@
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { memo, useCallback, useEffect, useMemo, useRef } from "react";
+import { Headphones, Play, ScrollText, Subtitles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Episode, Movie, Server } from "@/types/movie-detail.types";
-import { Headphones, Subtitles, Play, Loader2, ScrollText } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Movie, Server } from "@/types/movie-detail.types";
+import { getServerLabel } from "@/lib/episode-params";
 
 interface EpisodeListProps {
   movie: Movie;
   episodes: Server[];
-  selectedEpisode: Episode | null;
-  selectedServer: number;
-  onEpisodeSelect: (episode: Episode, serverIndex: number) => void;
+  activeServer: number;
+  activeTap: number;
+  pending?: boolean;
+  onSelect: (serverIndex: number, tap: number) => void;
 }
 
-export function EpisodeList({
+const ICONS = { sub: Subtitles, dub: Headphones, other: Play } as const;
+
+/**
+ * "Tập 1" -> "1", "Tập 01" -> "1", "Tập 1a" -> "1a", "Full" -> "Full"
+ * Nếu bỏ tiền tố mà rỗng thì giữ nguyên tên gốc.
+ */
+function getEpisodeLabel(name: string): string {
+  const label = name
+    .replace(/^\s*(tập|tap|episode|ep)\b\.?\s*/i, "")
+    .replace(/^0+(?=\d)/, "")
+    .trim();
+  return label || name;
+}
+
+function EpisodeListBase({
   movie,
   episodes,
-  selectedEpisode,
-  selectedServer,
-  onEpisodeSelect,
+  activeServer,
+  activeTap,
+  pending,
+  onSelect,
 }: EpisodeListProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const currentTap = searchParams.get("tap");
-  const currentServer = searchParams.get("server");
-  const [isChanging, setIsChanging] = useState(false);
-  const [isServerChanging, setIsServerChanging] = useState(false);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const server = episodes[activeServer];
 
-  const getServerSlug = (serverName: string) => {
-    if (serverName.toLowerCase().includes("vietsub")) {
-      return "vietsub";
-    }
-    if (
-      serverName.toLowerCase().includes("lồng tiếng") ||
-      serverName.toLowerCase().includes("thuyết minh")
-    ) {
-      return "thuyet-minh";
-    }
-    return "vietsub"; // default
-  };
+  // Event delegation: 1 handler cho cả trăm nút thay vì 1 closure / nút
+  const handleGridClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const btn = (e.target as HTMLElement).closest<HTMLButtonElement>(
+        "button[data-tap]",
+      );
+      if (!btn) return;
+      const tap = Number(btn.dataset.tap);
+      if (tap) onSelect(activeServer, tap);
+    },
+    [activeServer, onSelect],
+  );
 
-  const getServerDisplayName = (serverName: string) => {
-    if (serverName.toLowerCase().includes("vietsub")) {
-      return { name: "Vietsub", icon: Subtitles, variant: "default" as const };
-    }
-    if (
-      serverName.toLowerCase().includes("lồng tiếng") ||
-      serverName.toLowerCase().includes("thuyết minh")
-    ) {
-      return {
-        name: "Lồng Tiếng",
-        icon: Headphones,
-        variant: "secondary" as const,
-      };
-    }
-    return { name: serverName, icon: Play, variant: "outline" as const };
-  };
-
-  const getCurrentServerIndex = () => {
-    if (!currentServer) return selectedServer;
-
-    const serverIndex = episodes.findIndex(
-      (server) => getServerSlug(server.server_name) === currentServer
-    );
-    return serverIndex >= 0 ? serverIndex : selectedServer;
-  };
-
-  const activeServerIndex = getCurrentServerIndex();
-
+  // Tự cuộn tới tập đang xem
   useEffect(() => {
-    setIsServerChanging(false);
-  }, [episodes]);
+    gridRef.current
+      ?.querySelector('[aria-current="true"]')
+      ?.scrollIntoView({ block: "nearest" });
+  }, [activeServer, activeTap]);
 
-  const handleServerChange = (serverIndex: number) => {
-    if (serverIndex === activeServerIndex) return;
-    setIsServerChanging(true);
-    const params = new URLSearchParams(searchParams.toString());
-    const serverSlug = getServerSlug(episodes[serverIndex].server_name);
-    params.set("server", serverSlug);
+  // Chỉ render server đang chọn (trước đây render tất cả TabsContent)
+  const tiles = useMemo(
+    () =>
+      (server?.server_data ?? []).map((ep, i) => {
+        const tap = i + 1;
+        const selected = tap === activeTap;
+        return (
+          <button
+            key={ep.slug}
+            type="button"
+            data-tap={tap}
+            aria-current={selected}
+            title={ep.name}
+            aria-label={ep.name}
+            className={`h-10 truncate rounded-md border px-2 text-xs font-medium tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+              selected
+                ? "border-primary bg-primary text-primary-foreground"
+                : "bg-background hover:bg-muted"
+            }`}
+          >
+            {getEpisodeLabel(ep.name)}
+          </button>
+        );
+      }),
+    [server, activeTap],
+  );
 
-    // Reset tập về 1 khi chuyển server
-    params.set("tap", "1");
-
-    router.push(`?${params.toString()}`);
-
-    // Chọn tập đầu tiên của server mới
-    if (episodes[serverIndex]?.server_data?.[0]) {
-      onEpisodeSelect(episodes[serverIndex].server_data[0], serverIndex);
-    }
-
-    // Reset loading state sau 500ms
-    setTimeout(() => setIsServerChanging(false), 500);
-  };
+  const completed = movie.status === "completed";
 
   return (
-    <Card className="overflow-hidden h-full w-full gap-4">
-      <CardHeader className="gap-3">
-        <CardTitle className="flex items-end gap-1">
-          <ScrollText className="size-5" />
-          Danh sách tập phim
-        </CardTitle>
-        <CardDescription className="flex items-center gap-2 text-sm">
-          <span>{movie.episode_total} tập</span>
-          <span>•</span>
-          <Badge
-            variant={movie.status === "completed" ? "default" : "secondary"}
-            className="text-xs"
-          >
-            {movie.status === "completed" ? "Hoàn thành" : "Đang cập nhật"}
+    <aside className="flex min-h-0 flex-col rounded-xl border bg-card lg:h-full">
+      <div className="space-y-2 px-4 pt-3">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="flex items-center gap-2 font-semibold">
+            <ScrollText className="size-5 text-primary" />
+            Danh sách tập phim
+          </h2>
+          <Badge variant={completed ? "default" : "secondary"}>
+            {completed ? "Hoàn thành" : "Đang cập nhật"}
           </Badge>
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex">
-        <Tabs value={activeServerIndex.toString()} className="w-full">
-          <TabsList className="flex w-full grid-cols-2 mb-2">
-            {episodes.map((server, index) => {
-              const { name, icon: Icon } = getServerDisplayName(
-                server.server_name
-              );
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {movie.episode_total} tập
+        </p>
+
+        {episodes.length > 1 && (
+          <div
+            role="tablist"
+            aria-label="Chọn phiên bản"
+            className="grid auto-cols-fr grid-flow-col gap-1 rounded-lg bg-muted p-1"
+          >
+            {episodes.map((s, i) => {
+              const { label, kind } = getServerLabel(s.server_name);
+              const Icon = ICONS[kind];
+              const selected = i === activeServer;
               return (
-                <TabsTrigger
-                  key={index}
-                  value={index.toString()}
-                  className={`flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-200 ${
-                    isServerChanging ? "opacity-50 cursor-not-allowed" : ""
+                <button
+                  key={s.server_name}
+                  type="button"
+                  role="tab"
+                  aria-selected={selected}
+                  onClick={() => !selected && onSelect(i, 1)}
+                  className={`flex items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                    selected
+                      ? "bg-background shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
-                  onClick={() => handleServerChange(index)}
-                  disabled={isServerChanging}
                 >
-                  <Icon className="w-4 h-4" />
-                  {name}
-                </TabsTrigger>
+                  <Icon className="size-4" />
+                  {label}
+                </button>
               );
             })}
-          </TabsList>
+          </div>
+        )}
+      </div>
 
-          {episodes.map((server, serverIndex) => (
-            <TabsContent key={serverIndex} value={serverIndex.toString()}>
-              {isServerChanging ? (
-                <div className="p-2 h-90 w-full bg-muted rounded-lg flex justify-center items-center gap-2 text-sm">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Đang chuyển đổi phiên bản...</span>
-                </div>
-              ) : (
-                <ScrollArea className="h-90 w-full rounded-md border p-2">
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
-                    {server.server_data.map((episode, episodeIndex) => {
-                      const tapNumber = episodeIndex + 1;
-                      const isSelected = currentTap
-                        ? parseInt(currentTap) === tapNumber &&
-                          activeServerIndex === serverIndex
-                        : selectedEpisode?.slug === episode.slug &&
-                          selectedServer === serverIndex;
-
-                      return (
-                        <Button
-                          key={episodeIndex}
-                          variant={isSelected ? "default" : "outline"}
-                          size="sm"
-                          disabled={isChanging || isSelected}
-                          className={`
-                          h-10 p-2 text-xs font-medium transition-all duration-200
-                          ${
-                            isSelected
-                              ? "bg-primary text-primary-foreground shadow-md"
-                              : "hover:bg-muted"
-                          }
-                          ${isChanging ? "opacity-50 cursor-not-allowed" : ""}
-                        `}
-                          onClick={() => {
-                            if (isChanging) return;
-
-                            setIsChanging(true);
-                            const params = new URLSearchParams(
-                              searchParams.toString()
-                            );
-                            params.set("tap", tapNumber.toString());
-
-                            // Đảm bảo server param được set đúng
-                            const serverSlug = getServerSlug(
-                              episodes[serverIndex].server_name
-                            );
-                            params.set("server", serverSlug);
-
-                            router.push(`?${params.toString()}`);
-                            onEpisodeSelect(episode, serverIndex);
-
-                            setTimeout(() => setIsChanging(false), 300);
-                          }}
-                        >
-                          <span className="truncate">{episode.name}</span>
-                        </Button>
-                      );
-                    })}
-                  </div>
-                </ScrollArea>
-              )}
-            </TabsContent>
-          ))}
-        </Tabs>
-      </CardContent>
-    </Card>
+      <ScrollArea className="mt-3 h-72 shrink-0 lg:h-auto lg:min-h-0 lg:flex-1 [&>[data-radix-scroll-area-viewport]>div]:!block">
+        <div
+          ref={gridRef}
+          onClick={handleGridClick}
+          className={`grid grid-cols-5 content-start gap-2 px-4 pb-4 sm:grid-cols-6 lg:grid-cols-5 xl:grid-cols-6 ${
+            pending ? "opacity-70" : ""
+          }`}
+        >
+          {tiles}
+        </div>
+      </ScrollArea>
+    </aside>
   );
 }
+
+export const EpisodeList = memo(EpisodeListBase);

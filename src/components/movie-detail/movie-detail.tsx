@@ -1,14 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+} from "react";
+import Image from "next/image";
+import { useRouter, useSearchParams } from "next/navigation";
 import { MovieHero } from "./movie-hero";
 import { VideoPlayer } from "./video-player";
 import { MovieInfo } from "./movie-info";
 import { CastCrew } from "./cast-drew";
 import { EpisodeList } from "./episode-list";
 import { MovieStats } from "./movie-stats";
-import { Episode, MovieDetailResponse } from "@/types/movie-detail.types";
 import {
   MovieHeroSkeleton,
   VideoPlayerSkeleton,
@@ -17,149 +23,113 @@ import {
   EpisodeListSkeleton,
   MovieStatsSkeleton,
 } from "./skeletons";
-import Image from "next/image";
-import { getImageUrl } from "@/lib/image";
+import { MovieDetailResponse } from "@/types/movie-detail.types";
+import {
+  getServerSlug,
+  resolveServerIndex,
+  resolveTap,
+} from "@/lib/episode-params";
 
 interface MovieDetailProps {
   slug: string;
   initialData?: MovieDetailResponse | null;
 }
 
+const isValid = (d?: MovieDetailResponse | null): d is MovieDetailResponse =>
+  !!d && d.status === true && !!d.movie;
+
+const MAIN_GRID = "grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]";
+
 export default function MovieDetail({ slug, initialData }: MovieDetailProps) {
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
+
   const [movieData, setMovieData] = useState<MovieDetailResponse | null>(
-    initialData || null,
+    isValid(initialData) ? initialData : null,
   );
-  const [loading, setLoading] = useState(true);
+  // Có dữ liệu SSR thì không cần hiện skeleton
+  const [loading, setLoading] = useState(!isValid(initialData));
   const [error, setError] = useState<string | null>(null);
-  const [selectedEpisode, setSelectedEpisode] = useState<Episode | null>(null);
-  const [selectedServer, setSelectedServer] = useState(0);
 
   useEffect(() => {
-    if (!movieData?.episodes || movieData.episodes.length === 0) return;
-
-    const tapParam = searchParams.get("tap");
-    const serverParam = searchParams.get("server");
-
-    // Helper function để tìm server index từ server param
-    const getServerIndexFromParam = (serverParam: string) => {
-      return movieData.episodes.findIndex((server) => {
-        const serverName = server.server_name.toLowerCase();
-        if (serverParam === "vietsub" && serverName.includes("vietsub")) {
-          return true;
-        }
-        if (
-          serverParam === "thuyet-minh" &&
-          (serverName.includes("lồng tiếng") ||
-            serverName.includes("thuyết minh"))
-        ) {
-          return true;
-        }
-        return false;
-      });
-    };
-
-    // Xác định server index
-    let targetServerIndex = 0;
-    if (serverParam) {
-      const foundServerIndex = getServerIndexFromParam(serverParam);
-      if (foundServerIndex >= 0) {
-        targetServerIndex = foundServerIndex;
-      }
-    }
-
-    if (tapParam) {
-      const tapNumber = parseInt(tapParam);
-      if (!isNaN(tapNumber) && tapNumber > 0) {
-        const server = movieData.episodes[targetServerIndex];
-        if (server?.server_data && server.server_data.length >= tapNumber) {
-          const episode = server.server_data[tapNumber - 1];
-          if (episode) {
-            setSelectedEpisode(episode);
-            setSelectedServer(targetServerIndex);
-            return;
-          }
-        }
-      }
-    }
-
-    // Fallback: chọn tập đầu tiên của server được chỉ định hoặc server đầu tiên
-    const defaultServer =
-      movieData.episodes[targetServerIndex] || movieData.episodes[0];
-    if (defaultServer?.server_data?.[0]) {
-      setSelectedEpisode(defaultServer.server_data[0]);
-      setSelectedServer(targetServerIndex);
-    }
-  }, [movieData, searchParams]);
-
-  useEffect(() => {
-    if (initialData && initialData.status === true && initialData.movie) {
+    if (isValid(initialData)) {
       setMovieData(initialData);
       setLoading(false);
       setError(null);
       return;
     }
+    if (!slug) return;
 
-    const fetchMovieData = async () => {
+    const ac = new AbortController();
+    (async () => {
       try {
         setLoading(true);
         setError(null);
-
-        const response = await fetch(`/api/phim/${slug}`);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch movie: ${response.status}`);
-        }
-
-        const data: MovieDetailResponse = await response.json();
-
-        if (data.status === true && data.movie) {
-          setMovieData(data);
-        } else {
-          throw new Error(data.msg || "Failed to load movie data");
-        }
+        const res = await fetch(`/api/phim/${slug}`, { signal: ac.signal });
+        if (!res.ok) throw new Error(`Failed to fetch movie: ${res.status}`);
+        const data: MovieDetailResponse = await res.json();
+        if (!isValid(data))
+          throw new Error(data || "Failed to load movie data");
+        setMovieData(data);
       } catch (err) {
+        if (ac.signal.aborted) return;
         setError(err instanceof Error ? err.message : "An error occurred");
-        console.error("Error fetching movie:", err);
       } finally {
-        setLoading(false);
+        if (!ac.signal.aborted) setLoading(false);
       }
-    };
+    })();
 
-    if (slug) {
-      fetchMovieData();
-    }
+    return () => ac.abort();
   }, [slug, initialData]);
 
-  const handleEpisodeSelect = (episode: Episode, serverIndex: number) => {
-    // The episode selection will be handled by the useEffect that watches searchParams
-    // This function is kept for compatibility with EpisodeList component
-    setSelectedServer(serverIndex);
-  };
+  // Tập/server đang xem được SUY RA từ URL, không lưu trong state
+  // -> bỏ 2 useState + 1 useEffect, không còn render thừa / lệch state.
+  const episodes = movieData?.episodes;
+  const serverParam = searchParams.get("server");
+  const tapParam = searchParams.get("tap");
+
+  const { serverIndex, tap, episode } = useMemo(() => {
+    const list = episodes ?? [];
+    const serverIndex = resolveServerIndex(list, serverParam);
+    const server = list[serverIndex];
+    const tap = resolveTap(server, tapParam);
+    return {
+      serverIndex,
+      tap,
+      episode: server?.server_data?.[tap - 1] ?? null,
+    };
+  }, [episodes, serverParam, tapParam]);
+
+  const handleSelect = useCallback(
+    (nextServer: number, nextTap: number) => {
+      const list = movieData?.episodes;
+      if (!list?.[nextServer]) return;
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("server", getServerSlug(list[nextServer].server_name));
+      params.set("tap", String(nextTap));
+      startTransition(() => {
+        router.push(`?${params.toString()}`, { scroll: false });
+      });
+    },
+    [movieData, router, searchParams],
+  );
 
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
         <MovieHeroSkeleton />
-
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col gap-4">
-            <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 h-full w-full">
-              <div className="lg:col-span-4 col-span-1">
-                <VideoPlayerSkeleton />
-              </div>
-              <div className="lg:col-span-2 col-span-1 h-full">
-                <EpisodeListSkeleton />
-              </div>
+        <div className="mx-auto max-w-7xl space-y-4 px-4">
+          <div className={MAIN_GRID}>
+            <VideoPlayerSkeleton />
+            <EpisodeListSkeleton />
+          </div>
+          <div className={MAIN_GRID}>
+            <div className="grid gap-4">
+              <MovieInfoSkeleton />
+              <CastCrewSkeleton />
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 h-full w-full">
-              <div className="grid lg:col-span-4 col-span-1 gap-4">
-                <MovieInfoSkeleton />
-                <CastCrewSkeleton />
-              </div>
-              <div className="lg:col-span-2 col-span-1 h-full">
-                <MovieStatsSkeleton />
-              </div>
-            </div>
+            <MovieStatsSkeleton />
           </div>
         </div>
       </div>
@@ -168,74 +138,79 @@ export default function MovieDetail({ slug, initialData }: MovieDetailProps) {
 
   if (error || !movieData) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-500 mb-4">Lỗi</h1>
-          <p className="text-muted-foreground">
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-center" role="alert">
+          <h1 className="mb-2 text-2xl font-bold text-destructive">Lỗi</h1>
+          <p className="mb-4 text-muted-foreground">
             {error || "Không thể tải thông tin phim"}
           </p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
+          >
+            Tải lại trang
+          </button>
         </div>
       </div>
     );
   }
 
-  const { movie, episodes } = movieData;
+  const { movie } = movieData;
+  const server = movieData.episodes[serverIndex];
 
   return (
-    <div className="relative">
-      <div className="absolute inset-0 h-[60vh]">
+    <div className="relative px-4">
+      <div className="absolute inset-x-0 top-0 -z-0 h-[60vh]">
         <Image
           src={movie.thumb_url || "/placeholder.svg"}
-          alt={movie.name}
+          alt=""
           fill
-          className="object-cover rounded-lg w-full h-[60vh] max-h-[66vh]"
+          sizes="100vw"
+          quality={50}
           priority
+          className="object-cover opacity-60"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
       </div>
+
       <div className="relative space-y-8 pt-8">
         <MovieHero movie={movie} />
 
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col gap-4">
-            <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 h-full w-full">
-              <div className="lg:col-span-4 col-span-1">
-                {selectedEpisode && (
-                  <VideoPlayer
-                    key={`${selectedEpisode.slug}-${selectedServer}`}
-                    selectedEpisode={selectedEpisode}
-                    selectedServer={episodes[selectedServer]}
-                    movieId={movie._id}
-                    movieSlug={movie.slug}
-                    movieName={movie.name}
-                    posterUrl={movie.poster_url}
-                    thumbUrl={movie.thumb_url}
-                  />
-                )}
-              </div>
-              <div className="lg:col-span-2 col-span-1">
-                {selectedEpisode && (
-                  <EpisodeList
-                    movie={movie}
-                    episodes={episodes}
-                    selectedEpisode={selectedEpisode}
-                    selectedServer={selectedServer}
-                    onEpisodeSelect={handleEpisodeSelect}
-                  />
-                )}
+        <div className="space-y-4 ">
+          <div className={MAIN_GRID}>
+            {episode && server && (
+              <VideoPlayer
+                episode={episode}
+                serverName={server.server_name}
+                movieId={movie._id}
+                movieSlug={movie.slug}
+                movieName={movie.name}
+                posterUrl={movie.poster_url}
+                thumbUrl={movie.thumb_url}
+              />
+            )}
+            {/* Cột tập phim luôn cao bằng player; danh sách tự cuộn bên trong */}
+            <div className="relative min-w-0">
+              <div className="lg:absolute lg:inset-0">
+                <EpisodeList
+                  movie={movie}
+                  episodes={movieData.episodes}
+                  activeServer={serverIndex}
+                  activeTap={tap}
+                  pending={isPending}
+                  onSelect={handleSelect}
+                />
               </div>
             </div>
+          </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 h-full w-full">
-              <div className="grid col-span-1 lg:col-span-4 gap-4">
-                <MovieInfo movie={movie} />
-
-                <CastCrew movie={movie} />
-              </div>
-              <div className="col-span-1 lg:col-span-2">
-                <MovieStats movie={movie} />
-              </div>
+          <div className={MAIN_GRID}>
+            <div className="grid content-start gap-4">
+              <MovieInfo movie={movie} />
+              <CastCrew movie={movie} />
             </div>
+            <MovieStats movie={movie} />
           </div>
         </div>
       </div>

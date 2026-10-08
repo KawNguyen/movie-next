@@ -9,7 +9,7 @@ export default function Header() {
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 flex h-16 shrink-0 items-center justify-between gap-2 border-b bg-background px-4 mb-4 transition-all duration-300",
+        "sticky top-0 z-50 flex h-16 shrink-0 items-center justify-between gap-2 border-b bg-background px-4 transition-all duration-300",
       )}
     >
       <div className="h-4 flex items-center gap-2">

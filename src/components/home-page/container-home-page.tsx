@@ -22,7 +22,7 @@ interface ContainerHomePageProps {
 
 const ContainerHomePage = ({ initialData }: ContainerHomePageProps) => {
   return (
-    <main className="space-y-6">
+    <main className="space-y-6 p-4">
       <HomeHero movies={initialData?.items || []} />
 
       <ContinueWatchingSection />

@@ -1,15 +1,6 @@
 import type { Metadata } from "next";
 import ShowContainer from "@/components/show-container";
-import {
-  buildQuery,
-  fetchListData,
-  type SearchParamsInput,
-} from "@/lib/fetch-list-data";
-
-interface PageProps {
-  params: Promise<{ slug: string }>;
-  searchParams: Promise<SearchParamsInput>;
-}
+import { buildQuery, fetchListData } from "@/lib/fetch-list-data";
 
 const countryMap: Record<string, string> = {
   "trung-quoc": "Trung Quốc",
@@ -53,7 +44,7 @@ const countryMap: Record<string, string> = {
 export async function generateMetadata({
   params,
   searchParams,
-}: PageProps): Promise<Metadata> {
+}: PageProps<"/quoc-gia/[slug]">): Promise<Metadata> {
   const { slug } = await params;
   const sp = await searchParams;
 
@@ -93,7 +84,10 @@ export async function generateMetadata({
   };
 }
 
-export default async function Page({ params, searchParams }: PageProps) {
+export default async function Page({
+  params,
+  searchParams,
+}: PageProps<"/quoc-gia/[slug]">) {
   const { slug } = await params;
   const sp = await searchParams;
 

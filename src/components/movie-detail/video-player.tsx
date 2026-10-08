@@ -1,19 +1,18 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Play, Loader2, Clapperboard } from "lucide-react";
-import { Episode, Server } from "@/types/movie-detail.types";
-import { useEffect, useRef, useState, useCallback } from "react";
-import Hls from "hls.js";
+import { useEffect, useRef, useState } from "react";
+import type HlsType from "hls.js";
+import { Clapperboard, Loader2, RotateCw, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Episode } from "@/types/movie-detail.types";
 import { useWatchEvents } from "@/hooks/use-watch-events";
-import { VideoElementWrapper } from "./video-element-wrapper";
 import { handleHlsError, cleanupHls } from "@/lib/hls-config";
 
 interface VideoPlayerProps {
-  selectedEpisode: Episode;
-  selectedServer: Server;
+  episode: Episode;
+  serverName: string;
   movieId: string;
   movieSlug: string;
   movieName: string;
@@ -21,9 +20,16 @@ interface VideoPlayerProps {
   thumbUrl?: string;
 }
 
+type Status = "loading" | "ready" | "error";
+
+const formatTime = (s: number) =>
+  `${Math.floor(s / 60)}:${Math.floor(s % 60)
+    .toString()
+    .padStart(2, "0")}`;
+
 export function VideoPlayer({
-  selectedEpisode,
-  selectedServer,
+  episode,
+  serverName,
   movieId,
   movieSlug,
   movieName,
@@ -31,355 +37,218 @@ export function VideoPlayer({
   thumbUrl,
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const hlsRef = useRef<Hls | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [canPlay, setCanPlay] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [status, setStatus] = useState<Status>("loading");
+  const [errorMsg, setErrorMsg] = useState("");
+  const [attempt, setAttempt] = useState(0);
 
-  // Watch events hook
-  const {
-    handleStartWatch,
-    handleProgressUpdate,
-    handleCompleteWatch,
-    handlePauseWatch,
-    handleResumeWatch,
-    getSavedProgress,
-  } = useWatchEvents({
+  const watch = useWatchEvents({
     movieId,
     movieSlug,
     movieName,
     posterUrl,
     thumbUrl,
-    episodeId: selectedEpisode.slug,
-    episodeName: selectedEpisode.name,
+    episodeId: episode.slug,
+    episodeName: episode.name,
   });
 
-  // Load saved progress when episode changes
-  const loadSavedProgress = useCallback(async () => {
-    try {
-      const progress = await getSavedProgress();
-      return progress;
-    } catch (error) {
-      console.error("Error loading saved progress:", error);
-      return 0;
-    }
-  }, [getSavedProgress]);
+  // Giữ handler mới nhất trong ref -> effect phát video KHÔNG phải chạy lại
+  // (và khởi tạo lại HLS) mỗi khi hook trả về function mới.
+  const watchRef = useRef(watch);
+  useEffect(() => {
+    watchRef.current = watch;
+  });
+
+  const src = episode.link_m3u8;
 
   useEffect(() => {
     const video = videoRef.current;
-    if (
-      !video ||
-      !selectedServer.server_data ||
-      selectedServer.server_data.length === 0
-    )
+    if (!video) return;
+
+    if (!src) {
+      setErrorMsg("Không tìm thấy link video cho tập này.");
+      setStatus("error");
       return;
-
-    let isComponentMounted = true;
-    setIsTransitioning(true);
-
-    // Reset states
-    setIsLoading(true);
-    setError(null);
-    setCanPlay(false);
-
-    // Properly cleanup previous HLS instance
-    if (hlsRef.current) {
-      try {
-        hlsRef.current.destroy();
-      } catch (e) {
-        console.warn("Error destroying HLS instance:", e);
-      }
-      hlsRef.current = null;
     }
 
-    // Reset video src to prevent conflicts
-    video.removeAttribute("src");
-    video.load();
+    let active = true;
+    let hls: HlsType | null = null;
+    const ac = new AbortController();
+    const { signal } = ac;
 
-    const currentEpisodeData = selectedServer.server_data.find(
-      (ep) => ep.slug === selectedEpisode.slug
+    setStatus("loading");
+
+    const fail = (msg: string) => {
+      if (!active) return;
+      setErrorMsg(msg);
+      setStatus("error");
+    };
+
+    // Tải tiến độ đã lưu song song với việc tải manifest
+    const progressPromise = watchRef.current
+      .getSavedProgress()
+      .catch(() => 0) as Promise<number>;
+
+    video.addEventListener(
+      "loadedmetadata",
+      async () => {
+        if (!active) return;
+        setStatus("ready");
+        const saved = await progressPromise;
+        if (!active || !saved || saved < 3) return;
+        if (video.duration && saved > video.duration - 5) return;
+        video.currentTime = saved;
+        toast.success(`Tiếp tục từ ${formatTime(saved)}`);
+      },
+      { once: true, signal },
     );
 
-    if (!currentEpisodeData || !currentEpisodeData.link_m3u8) {
-      setError("Không tìm thấy link video cho tập này.");
-      setIsLoading(false);
-      return;
-    }
+    // Ghi nhận tiến độ xem, giới hạn 1 lần/giây
+    let lastReport = 0;
+    video.addEventListener(
+      "timeupdate",
+      () => {
+        const now = Date.now();
+        if (now - lastReport < 1000 || !video.duration) return;
+        lastReport = now;
+        watchRef.current.handleProgressUpdate(video.currentTime, video.duration);
+      },
+      { signal },
+    );
+    video.addEventListener(
+      "play",
+      () => {
+        if (!video.duration) return;
+        watchRef.current.handleStartWatch(video.currentTime, video.duration);
+        watchRef.current.handleResumeWatch(video.currentTime, video.duration);
+      },
+      { signal },
+    );
+    video.addEventListener(
+      "pause",
+      () => {
+        if (!video.duration) return;
+        watchRef.current.handlePauseWatch(video.currentTime, video.duration);
+      },
+      { signal },
+    );
+    video.addEventListener(
+      "ended",
+      () => {
+        if (!video.duration) return;
+        watchRef.current.handleCompleteWatch(video.duration);
+      },
+      { signal },
+    );
 
-    const videoSrc = currentEpisodeData.link_m3u8;
-
-    // Load saved progress first, then setup video
-    loadSavedProgress().then((savedProgress) => {
-      if (!isComponentMounted) return;
+    const init = async () => {
+      // hls.js khá nặng (~500KB) -> chỉ tải khi thật sự cần phát
+      const { default: Hls } = await import("hls.js");
+      if (!active) return;
 
       if (Hls.isSupported()) {
-        const hls = new Hls({
-          // Buffer configuration - tối ưu để giảm thiểu memory usage
-          maxBufferLength: 10, // 10 seconds forward buffer
-          maxMaxBufferLength: 20, // Maximum allowed buffer length
-          maxBufferSize: 60 * 1000 * 1000, // 60MB buffer size
-          maxBufferHole: 0.3, // 300ms hole tolerance
-
-          // Loading và retry configuration
+        hls = new Hls({
+          maxBufferLength: 30,
+          maxMaxBufferLength: 60,
+          maxBufferSize: 60 * 1000 * 1000,
+          maxBufferHole: 0.3,
+          backBufferLength: 30, // giải phóng bộ nhớ phần đã xem
+          startLevel: -1,
+          capLevelToPlayerSize: true,
+          enableWorker: true,
           manifestLoadingMaxRetry: 3,
           manifestLoadingRetryDelay: 500,
+          manifestLoadingTimeOut: 10000,
           levelLoadingMaxRetry: 3,
           levelLoadingRetryDelay: 500,
           fragLoadingMaxRetry: 3,
           fragLoadingRetryDelay: 500,
-
-          // Startup performance
-          startLevel: -1, // Auto start level
-          capLevelToPlayerSize: true, // Limit resolution to player size
-
-          // Error recovery
-          enableWorker: true, // Use web worker if available
-
-          // Network optimization
-          enableSoftwareAES: true,
-
-          // Fragment loading
-          fragLoadingTimeOut: 20000, // 20s timeout
-          manifestLoadingTimeOut: 10000, // 10s timeout
-
-          // Live stream specific
-          liveBackBufferLength: 5,
+          fragLoadingTimeOut: 20000,
         });
-
-        hlsRef.current = hls;
-
-        hls.loadSource(videoSrc);
-        hls.attachMedia(video);
-
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          if (!isComponentMounted) return;
-          setIsLoading(false);
-          setCanPlay(true);
-          setIsTransitioning(false);
-
-          // Restore saved progress
-          if (savedProgress > 0) {
-            setTimeout(() => {
-              if (!isComponentMounted || !video) return;
-              video.currentTime = savedProgress;
-              toast.success(
-                `Tiếp tục từ ${Math.floor(savedProgress / 60)}:${Math.floor(
-                  savedProgress % 60
-                )
-                  .toString()
-                  .padStart(2, "0")}`
-              );
-            }, 500);
-          }
-        });
-
-        hls.on(Hls.Events.ERROR, (event, data) => {
-          if (!isComponentMounted) return;
-
-          console.error("HLS error:", data);
-
-          // Sử dụng error handler tối ưu
-          const recovered = handleHlsError(hls, data);
-
+        const instance = hls;
+        instance.on(Hls.Events.ERROR, (_e, data) => {
+          if (!active) return;
+          const recovered = handleHlsError(instance, data);
           if (!recovered && data.fatal) {
-            setError("Không thể tải video. Vui lòng thử server khác.");
-            setIsLoading(false);
-            setIsTransitioning(false);
+            fail("Không thể tải video. Vui lòng thử server khác.");
           }
         });
+        instance.loadSource(src);
+        instance.attachMedia(video);
       } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-        // Native HLS support (Safari)
-        video.src = videoSrc;
-
-        const handleLoadedMetadata = () => {
-          if (!isComponentMounted) return;
-          setIsLoading(false);
-          setCanPlay(true);
-          setIsTransitioning(false);
-
-          // Restore saved progress
-          if (savedProgress > 0) {
-            setTimeout(() => {
-              if (!isComponentMounted || !video) return;
-              video.currentTime = savedProgress;
-              toast.success(
-                `Tiếp tục từ ${Math.floor(savedProgress / 60)}:${Math.floor(
-                  savedProgress % 60
-                )
-                  .toString()
-                  .padStart(2, "0")}`
-              );
-            }, 500);
-          }
-        };
-
-        const handleVideoError = () => {
-          if (!isComponentMounted) return;
-          setError("Không thể tải video. Vui lòng thử server khác.");
-          setIsLoading(false);
-          setIsTransitioning(false);
-        };
-
-        video.addEventListener("loadedmetadata", handleLoadedMetadata);
-        video.addEventListener("error", handleVideoError);
+        video.addEventListener(
+          "error",
+          () => fail("Không thể tải video. Vui lòng thử server khác."),
+          { signal },
+        );
+        video.src = src;
       } else {
-        setError("Trình duyệt không hỗ trợ phát video HLS.");
-        setIsLoading(false);
-        setIsTransitioning(false);
+        fail("Trình duyệt không hỗ trợ phát video HLS.");
       }
-    });
-
-    // Add event listeners for watch tracking
-    const handleVideoTimeUpdate = () => {
-      if (!video || !video.duration || !isComponentMounted) return;
-      handleProgressUpdate(video.currentTime, video.duration);
     };
 
-    const handleVideoPlay = () => {
-      if (!video || !video.duration || !isComponentMounted) return;
-      handleStartWatch(video.currentTime, video.duration);
-      handleResumeWatch(video.currentTime, video.duration);
-    };
-
-    const handleVideoPause = () => {
-      if (!video || !video.duration || !isComponentMounted) return;
-      handlePauseWatch(video.currentTime, video.duration);
-    };
-
-    const handleVideoEnded = () => {
-      if (!video || !video.duration || !isComponentMounted) return;
-      handleCompleteWatch(video.duration);
-    };
-
-    // Add event listeners
-    video.addEventListener("timeupdate", handleVideoTimeUpdate);
-    video.addEventListener("play", handleVideoPlay);
-    video.addEventListener("pause", handleVideoPause);
-    video.addEventListener("ended", handleVideoEnded);
+    init();
 
     return () => {
-      isComponentMounted = false;
-
-      // Cleanup HLS với utility function
-      cleanupHls(hlsRef.current);
-      hlsRef.current = null;
-
-      // Remove event listeners
-      if (video) {
-        video.removeEventListener("timeupdate", handleVideoTimeUpdate);
-        video.removeEventListener("play", handleVideoPlay);
-        video.removeEventListener("pause", handleVideoPause);
-        video.removeEventListener("ended", handleVideoEnded);
-      }
+      active = false;
+      ac.abort();
+      cleanupHls(hls);
+      hls = null;
+      video.pause();
+      video.removeAttribute("src");
+      video.load();
     };
-  }, [
-    selectedServer.server_data,
-    selectedEpisode.slug,
-    loadSavedProgress,
-    handleStartWatch,
-    handleProgressUpdate,
-    handleCompleteWatch,
-    handlePauseWatch,
-    handleResumeWatch,
-  ]);
-
-  const handlePlay = () => {
-    const video = videoRef.current;
-    if (video && canPlay) {
-      video.play().catch((error) => {
-        console.error("Error playing video:", error);
-        setError("Không thể phát video.");
-      });
-    }
-  };
-
-  // Cleanup callback cho VideoElementWrapper
-  const handleVideoCleanup = useCallback(() => {
-    // Cleanup HLS instance với utility function
-    cleanupHls(hlsRef.current);
-    hlsRef.current = null;
-
-    // Reset video source
-    const video = videoRef.current;
-    if (video) {
-      try {
-        video.pause();
-        video.removeAttribute("src");
-        video.load();
-      } catch (e) {
-        console.warn("Error cleaning up video in wrapper:", e);
-      }
-    }
-  }, []);
+  }, [src, episode.slug, attempt]);
 
   return (
-    <VideoElementWrapper onCleanup={handleVideoCleanup}>
-      <Card className="gap-2">
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-end gap-1">
-              <Clapperboard className="size-5" />
-              <span>Đang xem: {selectedEpisode.name}</span>
-            </div>
-            <Badge variant="outline">{selectedServer.server_name}</Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="aspect-video bg-black rounded-lg relative overflow-hidden">
-            {error ? (
-              <div className="absolute inset-0 flex items-center justify-center text-center text-white bg-black/50">
-                <div>
-                  <Play className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg mb-2">Lỗi phát video</p>
-                  <p className="text-sm opacity-75">{error}</p>
-                </div>
-              </div>
-            ) : (
-              <>
-                <video
-                  ref={videoRef}
-                  className={`w-full h-full transition-opacity duration-300 ${
-                    isTransitioning ? "opacity-50" : "opacity-100"
-                  }`}
-                  controls={canPlay && !isTransitioning}
-                  preload="metadata"
-                  crossOrigin="anonymous"
-                  playsInline
-                />
+    <section className="overflow-hidden rounded-xl border bg-card">
+      <header className="flex items-center justify-between gap-3 px-4 py-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <Clapperboard className="size-5 shrink-0 text-primary" />
+          <h2 className="truncate font-semibold">Đang xem: {episode.name}</h2>
+        </div>
+        <Badge variant="outline" className="shrink-0">
+          {serverName}
+        </Badge>
+      </header>
 
-                {(isLoading || isTransitioning) && (
-                  <div className="absolute inset-0 flex items-center justify-center text-center text-white bg-black/50 transition-opacity duration-200">
-                    <div>
-                      <Loader2 className="w-16 h-16 mx-auto mb-4 opacity-50 animate-spin" />
-                      <p className="text-lg">
-                        {isTransitioning
-                          ? "Đang chuyển tập..."
-                          : "Đang tải video..."}
-                      </p>
-                    </div>
-                  </div>
-                )}
+      <div className="relative aspect-video bg-black">
+        <video
+          ref={videoRef}
+          className="size-full"
+          controls
+          playsInline
+          preload="metadata"
+          crossOrigin="anonymous"
+          poster={posterUrl || thumbUrl}
+        />
 
-                {!isLoading && !canPlay && !error && !isTransitioning && (
-                  <div
-                    className="absolute inset-0 flex items-center justify-center text-center text-white bg-black/50 cursor-pointer"
-                    onClick={handlePlay}
-                  >
-                    <div>
-                      <Play className="w-16 h-16 mx-auto mb-4 opacity-50 hover:opacity-100 transition-opacity" />
-                      <p className="text-lg">Nhấn để phát</p>
-                      <p className="text-sm opacity-75">
-                        {selectedEpisode.filename}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
+        {status === "loading" && (
+          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/60 text-white">
+            <Loader2 className="size-10 animate-spin opacity-70" />
+            <p className="text-sm">Đang tải video…</p>
           </div>
-        </CardContent>
-      </Card>
-    </VideoElementWrapper>
+        )}
+
+        {status === "error" && (
+          <div
+            role="alert"
+            className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/80 p-6 text-center text-white"
+          >
+            <TriangleAlert className="size-10 opacity-70" />
+            <div>
+              <p className="font-medium">Không phát được video</p>
+              <p className="mt-1 text-sm text-white/70">{errorMsg}</p>
+            </div>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => setAttempt((n) => n + 1)}
+            >
+              <RotateCw className="size-4" /> Thử lại
+            </Button>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
