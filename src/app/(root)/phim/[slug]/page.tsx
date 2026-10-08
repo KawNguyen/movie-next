@@ -1,25 +1,39 @@
+import { cache } from "react";
+
 import MovieDetail from "@/components/movie-detail/movie-detail";
 import { MovieDetailResponse } from "@/types/movie-detail.types";
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
-async function fetchMovieData(
-  slug: string,
-): Promise<MovieDetailResponse | null> {
-  try {
-    const res = await fetch(`${baseUrl}/api/phim/${slug}`);
+// Thông tin phim ít đổi => cache lâu hơn (5 phút).
+// Trang này không đọc searchParams nên Next có thể cache cả trang (ISR).
+export const revalidate = 300;
 
-    if (!res.ok) {
+// Trả về mảng rỗng: không build sẵn trang nào, nhưng mỗi slug được
+// render một lần ở request đầu tiên rồi cache lại (on-demand ISR).
+export function generateStaticParams() {
+  return [];
+}
+
+// - Data Cache: dùng lại kết quả trong 5 phút
+// - React.cache: gộp Page + generateMetadata thành 1 lần gọi
+// - tags: revalidateTag(`movie:${slug}`) để làm mới một phim cụ thể
+const fetchMovieData = cache(
+  async (slug: string): Promise<MovieDetailResponse | null> => {
+    try {
+      const res = await fetch(`${baseUrl}/api/phim/${slug}`, {
+        next: { revalidate: 300, tags: ["movies", `movie:${slug}`] },
+      });
+
+      if (!res.ok) return null;
+
+      return (await res.json()) as MovieDetailResponse;
+    } catch (error) {
+      console.error("Error fetching movie data:", error);
       return null;
     }
-
-    const data: MovieDetailResponse = await res.json();
-    return data;
-  } catch (error) {
-    console.error("Error fetching movie data:", error);
-    return null;
-  }
-}
+  },
+);
 
 const Page = async ({ params }: { params: Promise<{ slug: string }> }) => {
   const { slug } = await params;

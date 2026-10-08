@@ -20,8 +20,16 @@ function decodeHtmlEntities(text: string): string {
 
   return text.replace(
     /&quot;|&apos;|&amp;|&lt;|&gt;/g,
-    (match) => entities[match] || match
+    (match) => entities[match] || match,
   );
+}
+
+function stripHtmlTags(text: string): string {
+  return text.replace(/<[^>]*>/g, "");
+}
+
+function cleanContent(text: string): string {
+  return stripHtmlTags(decodeHtmlEntities(text)).trim();
 }
 
 export function MovieInfo({ movie }: MovieInfoProps) {
@@ -35,7 +43,7 @@ export function MovieInfo({ movie }: MovieInfoProps) {
       <CardContent>
         <ScrollArea className="lg:h-40 pr-2">
           <p className="text-muted-foreground leading-relaxed">
-            {decodeHtmlEntities(movie.content)}
+            {cleanContent(movie.content)}
           </p>
         </ScrollArea>
       </CardContent>

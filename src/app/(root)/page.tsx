@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import ContainerHomePage from "@/components/home-page/container-home-page";
 import { MovieItem } from "@/types/movie-list.types";
 
@@ -18,42 +20,47 @@ interface ApiResponse {
   };
 }
 
-async function fetchMoviesData(page: number = 1): Promise<ApiResponse | null> {
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/phim-moi-cap-nhat?page=${page}`, {
-      cache: "no-store",
-      headers: {
-        "User-Agent": "NextJS Server",
-      },
-    });
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
-    if (!res.ok) {
-      return null;
-    }
+// Phim mới cập nhật đổi thường xuyên => cache ngắn (60s)
+const MOVIES_REVALIDATE = 60;
 
-    const data: ApiResponse = await res.json();
-    return data;
-  } catch (error) {
-    console.error("Error fetching movies data:", error);
-    return null;
-  }
+function getPage(params: { [key: string]: string | string[] | undefined }) {
+  const raw = typeof params.page === "string" ? parseInt(params.page, 10) : 1;
+  return Number.isFinite(raw) && raw > 0 ? raw : 1;
 }
 
-const Page = async ({ searchParams }: PageProps) => {
-  const params = await searchParams;
-  const page = typeof params.page === "string" ? parseInt(params.page, 10) : 1;
+// - Data Cache: dùng lại kết quả trong 60s, không gọi lại API
+// - React.cache: gộp Page + generateMetadata thành 1 lần gọi trong cùng request
+// - tags: cho phép xoá cache chủ động bằng revalidateTag("movies")
+const fetchMoviesData = cache(
+  async (page: number): Promise<ApiResponse | null> => {
+    try {
+      const res = await fetch(`${baseUrl}/api/phim-moi-cap-nhat?page=${page}`, {
+        next: { revalidate: MOVIES_REVALIDATE, tags: ["movies"] },
+      });
 
+      if (!res.ok) return null;
+
+      return (await res.json()) as ApiResponse;
+    } catch (error) {
+      console.error("Error fetching movies data:", error);
+      return null;
+    }
+  },
+);
+
+const Page = async ({ searchParams }: PageProps) => {
+  const page = getPage(await searchParams);
   const moviesData = await fetchMoviesData(page);
 
   return <ContainerHomePage initialData={moviesData} />;
 };
 
 export async function generateMetadata({ searchParams }: PageProps) {
-  const params = await searchParams;
-  const page = typeof params.page === "string" ? parseInt(params.page, 10) : 1;
-
+  const page = getPage(await searchParams);
   const moviesData = await fetchMoviesData(page);
+  const year = new Date().getFullYear();
 
   const title =
     page === 1
@@ -62,7 +69,7 @@ export async function generateMetadata({ searchParams }: PageProps) {
 
   const description =
     page === 1
-      ? "Xem phim mới cập nhật hàng ngày với chất lượng HD, vietsub và thuyết minh đầy đủ. Tổng hợp phim hay mới nhất 2024."
+      ? `Xem phim mới cập nhật hàng ngày với chất lượng HD, vietsub và thuyết minh đầy đủ. Tổng hợp phim hay mới nhất ${year}.`
       : `Trang ${page} - Danh sách phim mới cập nhật với chất lượng cao, vietsub đầy đủ.`;
 
   const totalMovies = moviesData?.pagination?.totalItems || 0;
@@ -77,7 +84,7 @@ export async function generateMetadata({ searchParams }: PageProps) {
       "xem phim online",
       "phim vietsub",
       "phim thuyết minh",
-      "phim hay 2024",
+      `phim hay ${year}`,
       "phim HD",
       "xem phim miễn phí",
     ].join(", "),
