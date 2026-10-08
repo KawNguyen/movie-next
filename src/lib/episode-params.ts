@@ -1,4 +1,5 @@
 import type { Server } from "@/types/movie-detail.types";
+import { getServerSlug } from "./movie-url";
 
 /**
  * Một nơi duy nhất để chuyển đổi giữa tên server (từ API) <-> slug trên URL.
@@ -12,15 +13,6 @@ const slugify = (s: string) =>
     .replace(/đ/g, "d")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
-
-export function getServerSlug(serverName: string): string {
-  const name = serverName.toLowerCase();
-  if (name.includes("vietsub")) return "vietsub";
-  if (name.includes("lồng tiếng") || name.includes("thuyết minh")) {
-    return "thuyet-minh";
-  }
-  return slugify(serverName) || "server";
-}
 
 export function getServerLabel(serverName: string): {
   label: string;

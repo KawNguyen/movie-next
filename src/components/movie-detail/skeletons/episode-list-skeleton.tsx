@@ -1,42 +1,29 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { ScrollText } from "lucide-react";
 
 export function EpisodeListSkeleton() {
   return (
-    <Card className="overflow-hidden h-full w-full">
-      <CardHeader>
-        <CardTitle className="flex items-end gap-1">
-          <ScrollText className="size-5" />
-          Danh sách tập phim
-        </CardTitle>
-        <CardDescription className="flex items-center gap-2">
-          <Skeleton className="h-4 w-12" />
-          <span>•</span>
-          <Skeleton className="h-5 w-20" />
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex w-full mb-2 space-x-2">
-          <Skeleton className="h-10 flex-1" />
-          <Skeleton className="h-10 flex-1" />
-        </div>
-
-        <ScrollArea className="h-[350px] w-full rounded-md border p-2">
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
-            {Array.from({ length: 20 }).map((_, i) => (
-              <Skeleton key={i} className="h-10" />
-            ))}
+    <aside className="flex min-h-0 flex-col rounded-xl border bg-card lg:h-full">
+      <div className="space-y-2 px-4 pt-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Skeleton className="size-5 rounded-full" />
+            <Skeleton className="h-5 w-40" />
           </div>
-        </ScrollArea>
-      </CardContent>
-    </Card>
+          <Skeleton className="h-6 w-24 rounded-full" />
+        </div>
+        <Skeleton className="h-4 w-12" />
+        <div className="grid grid-flow-col auto-cols-fr gap-1 rounded-lg bg-muted p-1">
+          <Skeleton className="h-8" />
+          <Skeleton className="h-8" />
+        </div>
+      </div>
+      <div className="mt-3 h-72 shrink-0 p-4 lg:h-auto lg:min-h-0 lg:flex-1">
+        <div className="grid grid-cols-5 content-start gap-2 sm:grid-cols-6 lg:grid-cols-5 xl:grid-cols-6">
+          {Array.from({ length: 24 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 rounded-md" />
+          ))}
+        </div>
+      </div>
+    </aside>
   );
 }

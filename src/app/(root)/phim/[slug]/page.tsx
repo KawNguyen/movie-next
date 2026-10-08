@@ -45,11 +45,7 @@ const Page = async ({ params }: PageProps<"/phim/[slug]">) => {
 
 export default Page;
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export async function generateMetadata({ params }: PageProps<"/phim/[slug]">) {
   const { slug } = await params;
 
   const data = await fetchMovieData(slug);

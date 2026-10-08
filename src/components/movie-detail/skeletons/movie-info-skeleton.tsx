@@ -1,21 +1,17 @@
-"use client";
-
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function MovieInfoSkeleton() {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Nội dung phim</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-3/4" />
-        </div>
-      </CardContent>
-    </Card>
+    <section className="rounded-xl border bg-card p-5">
+      <div className="mb-3 flex items-center gap-2">
+        <Skeleton className="size-5 rounded-full" />
+        <Skeleton className="h-5 w-28" />
+      </div>
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-3/4" />
+      </div>
+    </section>
   );
 }
