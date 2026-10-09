@@ -14,3 +14,12 @@ export function formatNumber(num: number): string {
     maximumFractionDigits: 0,
   }).format(num);
 }
+
+export const slugify = (s: string) =>
+  s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");

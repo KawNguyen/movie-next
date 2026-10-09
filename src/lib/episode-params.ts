@@ -5,14 +5,6 @@ import { getServerSlug } from "./movie-url";
  * Một nơi duy nhất để chuyển đổi giữa tên server (từ API) <-> slug trên URL.
  * Trước đây logic này bị lặp ở movie-detail và episode-list.
  */
-const slugify = (s: string) =>
-  s
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/đ/g, "d")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
 
 export function getServerLabel(serverName: string): {
   label: string;
@@ -20,7 +12,8 @@ export function getServerLabel(serverName: string): {
 } {
   const slug = getServerSlug(serverName);
   if (slug === "vietsub") return { label: "Vietsub", kind: "sub" };
-  if (slug === "thuyet-minh") return { label: "Lồng tiếng", kind: "dub" };
+  if (slug === "thuyet-minh") return { label: "Thuyết minh", kind: "dub" };
+  if (slug === "long-tieng") return { label: "Lồng tiếng", kind: "dub" };
   return { label: serverName, kind: "other" };
 }
 

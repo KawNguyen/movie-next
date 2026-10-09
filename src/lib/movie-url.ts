@@ -2,13 +2,22 @@
  * Helper functions để xử lý URL params cho movie detail
  */
 
+import { slugify } from "./utils";
+
 export const getServerSlug = (serverName: string): string => {
-  if (serverName.toLowerCase().includes("vietsub")) {
+  const slug = slugify(serverName);
+  if (slug.toLowerCase().includes("vietsub")) {
     return "vietsub";
   }
   if (
-    serverName.toLowerCase().includes("lồng tiếng") ||
-    serverName.toLowerCase().includes("thuyết minh")
+    slug.toLowerCase().includes("lồng tiếng") ||
+    slug.toLowerCase().includes("long-tieng")
+  ) {
+    return "long-tieng";
+  }
+  if (
+    slug.toLowerCase().includes("thuyết minh") ||
+    slug.toLowerCase().includes("thuyet-minh")
   ) {
     return "thuyet-minh";
   }
