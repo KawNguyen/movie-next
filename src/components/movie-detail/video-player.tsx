@@ -110,7 +110,10 @@ export function VideoPlayer({
         const now = Date.now();
         if (now - lastReport < 1000 || !video.duration) return;
         lastReport = now;
-        watchRef.current.handleProgressUpdate(video.currentTime, video.duration);
+        watchRef.current.handleProgressUpdate(
+          video.currentTime,
+          video.duration,
+        );
       },
       { signal },
     );

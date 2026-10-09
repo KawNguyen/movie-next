@@ -42,7 +42,7 @@ export function FavoriteButtonSimple({
 
         // Use the single-item API check for detail pages
         const response = await fetch(
-          `/api/favorites/check/${encodeURIComponent(movieId)}`
+          `/api/favorites/check/${encodeURIComponent(movieId)}`,
         );
         const result = await response.json();
 
@@ -77,7 +77,7 @@ export function FavoriteButtonSimple({
             toast.success("Đã xóa khỏi danh sách yêu thích");
           } else {
             toast.error(
-              result.error || "Không thể xóa khỏi danh sách yêu thích"
+              result.error || "Không thể xóa khỏi danh sách yêu thích",
             );
           }
         } else {
@@ -93,7 +93,7 @@ export function FavoriteButtonSimple({
             toast.success("Đã thêm vào danh sách yêu thích");
           } else {
             toast.error(
-              result.error || "Không thể thêm vào danh sách yêu thích"
+              result.error || "Không thể thêm vào danh sách yêu thích",
             );
           }
         }
@@ -124,7 +124,7 @@ export function FavoriteButtonSimple({
         className={cn(
           sizeClasses[size],
           "bg-black/40 text-white border-white/20 animate-pulse",
-          className
+          className,
         )}
         disabled
       >
@@ -143,7 +143,7 @@ export function FavoriteButtonSimple({
           ? "bg-red-500 hover:bg-red-600 text-white"
           : "bg-black/40 hover:bg-black/60 text-white border-white/20",
         "transition-all duration-200",
-        className
+        className,
       )}
       onClick={handleToggle}
       disabled={isPending}

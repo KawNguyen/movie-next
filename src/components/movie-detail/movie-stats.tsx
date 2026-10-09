@@ -35,7 +35,10 @@ export function MovieStats({ movie }: MovieStatsProps) {
       </h2>
       <dl className="divide-y">
         {rows.map(({ label, value }) => (
-          <div key={label} className="flex justify-between gap-4 py-2.5 text-sm">
+          <div
+            key={label}
+            className="flex justify-between gap-4 py-2.5 text-sm"
+          >
             <dt className="text-muted-foreground">{label}</dt>
             <dd className="text-right font-medium">{value || "—"}</dd>
           </div>

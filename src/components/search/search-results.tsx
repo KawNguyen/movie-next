@@ -47,7 +47,9 @@ export function SearchResults({
         const items = data.status ? (data.data?.items ?? []) : [];
 
         setMovies(items.slice(0, PREVIEW_LIMIT));
-        setTotalItems(data.data?.params?.pagination?.totalItems ?? items.length);
+        setTotalItems(
+          data.data?.params?.pagination?.totalItems ?? items.length,
+        );
         setLoading(false);
       } catch (err) {
         if (controller.signal.aborted) return;

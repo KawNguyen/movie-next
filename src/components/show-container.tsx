@@ -43,9 +43,12 @@ function parseParams(sp: URLSearchParams): MovieListParams {
 
   return {
     page: num("page") ?? 1,
-    sort_field: (sp.get("sort_field") as MovieListParams["sort_field"]) ?? undefined,
-    sort_type: (sp.get("sort_type") as MovieListParams["sort_type"]) ?? undefined,
-    sort_lang: (sp.get("sort_lang") as MovieListParams["sort_lang"]) ?? undefined,
+    sort_field:
+      (sp.get("sort_field") as MovieListParams["sort_field"]) ?? undefined,
+    sort_type:
+      (sp.get("sort_type") as MovieListParams["sort_type"]) ?? undefined,
+    sort_lang:
+      (sp.get("sort_lang") as MovieListParams["sort_lang"]) ?? undefined,
     category: sp.get("category") ?? undefined,
     country: sp.get("country") ?? undefined,
     year: num("year"),
@@ -161,7 +164,11 @@ export default function ShowContainer({
       {error ? (
         <div className="py-10 text-center">
           <p className="mb-4 text-sm text-red-500">{error}</p>
-          <Button variant="outline" size="sm" onClick={() => loadMovies(filters)}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => loadMovies(filters)}
+          >
             Thử lại
           </Button>
         </div>

@@ -7,12 +7,7 @@ import { LogOut } from "lucide-react";
 interface LogoutButtonProps {
   className?: string;
   variant?:
-    | "default"
-    | "destructive"
-    | "outline"
-    | "secondary"
-    | "ghost"
-    | "link";
+    "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
 }
 
 export function LogoutButton({

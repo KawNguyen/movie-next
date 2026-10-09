@@ -1,8 +1,6 @@
 const baseUrl = process.env.NEXT_PUBLIC_API_IMAGE_URL;
 
-export function getImageUrl(
-  path: string | undefined | null,
-): string {
+export function getImageUrl(path: string | undefined | null): string {
   if (!path) return "";
 
   // Đã là URL đầy đủ

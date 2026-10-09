@@ -5,7 +5,7 @@ import { headers } from "next/headers";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ movieId: string }> }
+  { params }: { params: Promise<{ movieId: string }> },
 ) {
   try {
     const { movieId: rawMovieId } = await params;
@@ -14,7 +14,7 @@ export async function GET(
     if (!movieId || typeof movieId !== "string" || movieId.trim() === "") {
       return NextResponse.json(
         { success: false, error: "Invalid movie ID" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -48,7 +48,7 @@ export async function GET(
     console.error("Error checking favorite:", error);
     return NextResponse.json(
       { success: false, error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

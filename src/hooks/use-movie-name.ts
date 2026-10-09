@@ -2,10 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 
-import {
-  getMovieName,
-  subscribeToMovieSession,
-} from "@/lib/movie-session";
+import { getMovieName, subscribeToMovieSession } from "@/lib/movie-session";
 
 export function useMovieName(slug: string | null) {
   return useSyncExternalStore(

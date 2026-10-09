@@ -69,9 +69,7 @@ export function FavoriteMovieCard({
   };
 
   return (
-    <Card
-      className="group border-1 p-0 overflow-hidden transition-all duration-300 hover:-translate-y-2 relative flex flex-col md:flex-row md:h-40"
-    >
+    <Card className="group border-1 p-0 overflow-hidden transition-all duration-300 hover:-translate-y-2 relative flex flex-col md:flex-row md:h-40">
       {/* Mobile: Vertical Layout | Desktop: Left side image */}
       <Link
         href={`/phim/${movieSlug}`}

@@ -60,10 +60,9 @@ export function useMovieSearch(keyword: string, page = 1, limit?: number) {
     const ac = new AbortController();
     setState((s) => ({ ...s, loading: true, error: null }));
 
-    fetch(
-      `/api/tim-kiem?keyword=${encodeURIComponent(trimmed)}&page=${page}`,
-      { signal: ac.signal },
-    )
+    fetch(`/api/tim-kiem?keyword=${encodeURIComponent(trimmed)}&page=${page}`, {
+      signal: ac.signal,
+    })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json() as Promise<SearchApiResponse>;
