@@ -57,7 +57,7 @@ export default function HomeHeroCarousel({ movies }: HomeHeroProps) {
                   </div>
                 ) : (
                   <Image
-                    src={movie.poster_url}
+                    src={movie.thumb_url}
                     alt={movie.name}
                     fill
                     priority={index === 0}
@@ -67,22 +67,22 @@ export default function HomeHeroCarousel({ movies }: HomeHeroProps) {
                   />
                 )}
 
-                <div className="absolute inset-0 bg-gradient-to-r from-black via-black/50 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-r from-black via-black/50 to-transparent" />
 
                 <div className="absolute inset-0 z-10 flex items-center">
-                  <div className="container mx-auto px-3 sm:px-4 lg:px-8">
-                    <div className="max-w-2xl">
-                      <h1 className="text-2xl sm:text-4xl md:text-6xl font-bold text-white mb-2 sm:mb-4 drop-shadow-lg line-clamp-2">
+                  <div className="px-3 sm:px-2 md:px-4 lg:px-8">
+                    <div className="max-w-3xl">
+                      <h1 className="text-xl sm:text-xl md:text-4xl lg:text-6xl font-bold text-white mb-2 lg:mb-4 drop-shadow-lg line-clamp-2">
                         {movie.name}
                       </h1>
                       {movie.origin_name &&
                         movie.origin_name !== movie.name && (
-                          <h2 className="text-lg sm:text-xl md:text-2xl text-gray-200 mb-4 sm:mb-6 drop-shadow-md line-clamp-1">
+                          <h2 className="text-lg sm:text-xl md:text-2xl text-gray-200 mb-4 lg:mb-6 drop-shadow-md line-clamp-1">
                             {movie.origin_name}
                           </h2>
                         )}
 
-                      <div className="flex flex-wrap gap-2 sm:gap-3 mb-4 sm:mb-8">
+                      <div className="flex flex-wrap gap-2 lg:gap-3 mb-4 lg:mb-8">
                         {movie.year && (
                           <Badge
                             variant="default"
@@ -133,12 +133,11 @@ export default function HomeHeroCarousel({ movies }: HomeHeroProps) {
 
                       <div className="flex gap-2 sm:gap-4">
                         <Button
-                          size="sm"
                           variant="secondary"
-                          className="sm:size-lg font-semibold px-4 sm:px-8"
+                          className=" font-semibold px-4 lg:px-8"
                           onClick={() => router.push(`/phim/${movie.slug}`)}
                         >
-                          <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
+                          <Play className="w-4 h-4 md:w-5 md:h-5 mr-1" />
                           Xem Ngay
                         </Button>
                       </div>

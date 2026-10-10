@@ -87,7 +87,7 @@ export default function MovieDetail({ slug, initialData }: MovieDetailProps) {
 
   return (
     <div className="relative px-4">
-      <div className="absolute inset-x-0 top-0 -z-0 h-[60vh]">
+      <div className="absolute inset-x-0 top-0 z-0 h-[60vh]">
         <Image
           src={movie.thumb_url || "/placeholder.svg"}
           alt=""
@@ -97,17 +97,17 @@ export default function MovieDetail({ slug, initialData }: MovieDetailProps) {
           priority
           className="object-cover opacity-60"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-background via-background/80 to-transparent" />
       </div>
 
-      <div className="relative space-y-8 pt-8">
+      <div className="relative space-y-8 py-4">
         <MovieHero movie={movie} />
 
         <div className="space-y-4">
           <WatchSection movie={movie} episodes={movieData.episodes} />
 
           <div className={MAIN_GRID}>
-            <div className="grid content-start gap-4">
+            <div className="grid gap-4">
               <MovieInfo movie={movie} />
               <CastCrew movie={movie} />
             </div>

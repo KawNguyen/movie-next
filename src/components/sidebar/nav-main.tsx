@@ -37,10 +37,10 @@ export function NavMain({
   }[];
 }) {
   const pathname = usePathname();
-  const { isMobile, setOpen } = useSidebar();
+  const { isMobile, setOpenMobile } = useSidebar();
 
   const handleCloseSidebar = () => {
-    if (isMobile) setOpen(false);
+    if (isMobile) setOpenMobile(false);
   };
 
   return (

@@ -31,7 +31,7 @@ export function MovieHero({ movie }: MovieHeroProps) {
             height={450}
             sizes="(min-width: 768px) 300px, 200px"
             priority
-            className="h-auto w-[200px] rounded-xl object-cover shadow-xl ring-1 ring-border md:w-[300px]"
+            className="h-auto w-50 rounded-xl object-cover shadow-xl ring-1 ring-border md:w-75"
           />
         </div>
 

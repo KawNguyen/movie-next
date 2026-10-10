@@ -10,7 +10,7 @@ interface SearchMobileProps {
 export function SearchMobile({ className }: SearchMobileProps) {
   return (
     <div className={className}>
-      <div className="block md:hidden">
+      <div className="block lg:hidden">
         <SearchSheet>
           <Button
             variant="outline"
@@ -22,7 +22,7 @@ export function SearchMobile({ className }: SearchMobileProps) {
         </SearchSheet>
       </div>
 
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <SearchInput />
       </div>
     </div>

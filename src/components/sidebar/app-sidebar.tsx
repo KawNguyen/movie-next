@@ -19,7 +19,7 @@ import { NavSecondary } from "./nav-secondary";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar {...props} collapsible="icon">
+    <Sidebar {...props} collapsible="offcanvas">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>

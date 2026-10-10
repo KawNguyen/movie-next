@@ -71,7 +71,7 @@ export function SearchResults({
       className={
         isMobile
           ? "h-full"
-          : "absolute top-full left-0 right-0 mt-2 bg-background border rounded-lg shadow-lg z-50 max-h-[500px] overflow-y-auto"
+          : "absolute top-full left-0 right-0 mt-2 bg-background border rounded-lg shadow-lg z-50 max-h-125 overflow-y-auto"
       }
     >
       <div className={isMobile ? "p-0" : "p-4"}>
