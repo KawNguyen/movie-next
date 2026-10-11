@@ -18,7 +18,7 @@ const MovieCard = ({
   priority = false,
 }: MovieItem & { priority?: boolean }) => {
   return (
-    <Card className="group border-1 p-0 overflow-hidden transition-all duration-300 hover:-translate-y-2">
+    <Card className="group border p-0 overflow-hidden transition-all duration-300 hover:-translate-y-2">
       <MovieLink
         href={`/phim/${slug}`}
         slug={slug}
@@ -38,7 +38,7 @@ const MovieCard = ({
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="object-cover transition-transform duration-300 group-hover:scale-110"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <Badge className="absolute top-3 right-3 bg-black/70 text-white border-0">
               <Star className="w-3 h-3 mr-1 fill-yellow-400 text-yellow-400" />
               {tmdb.vote_average}
