@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogoutButton } from "@/components/auth/logout-button";
-import { User, Settings, History, Heart } from "lucide-react";
+import { User, Settings, Heart, History } from "lucide-react";
 import Link from "next/link";
 
 export function UserProfile() {
@@ -66,16 +66,16 @@ export function UserProfile() {
             <span>Profile</span>
           </DropdownMenuItem>
         </Link>
-        <Link href="/lich-su-xem">
-          <DropdownMenuItem>
-            <History className="mr-2 h-4 w-4" />
-            <span>Watch History</span>
-          </DropdownMenuItem>
-        </Link>
         <Link href="/yeu-thich">
           <DropdownMenuItem>
             <Heart className="mr-2 h-4 w-4" />
             <span>Favorites</span>
+          </DropdownMenuItem>
+        </Link>
+        <Link href="/lich-su-xem">
+          <DropdownMenuItem>
+            <History className="mr-2 h-4 w-4" />
+            <span>Watch History</span>
           </DropdownMenuItem>
         </Link>
         <DropdownMenuItem>

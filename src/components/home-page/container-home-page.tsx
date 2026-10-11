@@ -1,7 +1,6 @@
 import { MovieItem } from "@/types/movie-list.types";
 import MovieList from "../movie-list";
 import HomeHero from "./home-hero";
-import { ContinueWatchingSection } from "../watch-history/continue-watching-section";
 
 interface ApiResponse {
   status: boolean;
@@ -25,7 +24,6 @@ const ContainerHomePage = ({ initialData }: ContainerHomePageProps) => {
     <main className="space-y-6 p-4">
       <HomeHero movies={initialData?.items || []} />
 
-      <ContinueWatchingSection />
       <MovieList
         loading={false}
         movies={initialData?.items || []}

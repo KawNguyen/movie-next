@@ -6,7 +6,11 @@ import { VideoPlayer } from "./video-player";
 import { EpisodeList } from "./episode-list";
 import { WatchSectionSkeleton } from "./skeletons";
 import { MovieDetailResponse } from "@/types/movie-detail.types";
-import { resolveServerIndex, resolveTap } from "@/lib/episode-params";
+import {
+  getEpisodeUrlParam,
+  resolveServerIndex,
+  resolveTap,
+} from "@/lib/episode-params";
 import { getServerSlug } from "@/lib/movie-url";
 import { MAIN_GRID } from "./movie-detail-layout";
 
@@ -43,7 +47,12 @@ function WatchSectionContent({
       if (!episodes?.[nextServer]) return;
       const params = new URLSearchParams(searchParams.toString());
       params.set("server", getServerSlug(episodes[nextServer].server_name));
-      params.set("tap", String(nextTap));
+      params.set(
+        "tap",
+        getEpisodeUrlParam(
+          episodes[nextServer].server_data[nextTap - 1]?.slug ?? String(nextTap),
+        ),
+      );
       startTransition(() => {
         router.push(`?${params.toString()}`, { scroll: false });
       });

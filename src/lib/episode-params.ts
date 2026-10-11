@@ -28,7 +28,21 @@ export function resolveServerIndex(
 
 /** Trả về số tập hợp lệ (bắt đầu từ 1), mặc định 1. */
 export function resolveTap(server: Server | undefined, param: string | null) {
-  const n = Number.parseInt(param ?? "", 10);
+  const raw = param ?? "";
+  const exactIndex = server?.server_data?.findIndex((episode) => {
+    const slug = episode.slug.toLowerCase();
+    return slug === raw.toLowerCase() || slug.replace(/^tap-/, "") === raw;
+  });
+  if (exactIndex !== undefined && exactIndex >= 0) return exactIndex + 1;
+
+  const n = Number.parseInt(raw, 10);
+  const legacyN = Number.parseInt(raw.replace(/^tap-/i, ""), 10);
   const total = server?.server_data?.length ?? 0;
-  return Number.isFinite(n) && n >= 1 && n <= total ? n : 1;
+  const tap = Number.isFinite(n) ? n : legacyN;
+  return Number.isFinite(tap) && tap >= 1 && tap <= total ? tap : 1;
+}
+
+export function getEpisodeUrlParam(slug: string): string {
+  const normalized = slug.replace(/^tap-/i, "");
+  return /^\d+$/.test(normalized) ? String(Number(normalized)) : slug;
 }

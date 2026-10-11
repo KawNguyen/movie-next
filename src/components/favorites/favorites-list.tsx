@@ -1,66 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getFavorites } from "@/actions/favorites";
+import { useFavoriteStore } from "@/stores/favorite-store";
 import { FavoriteMovieCard } from "./favorite-movie-card";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import type { FavoriteMovie } from "@/data";
-import { FavoriteMovieCardSkeleton } from "./loading";
-
-interface FavoritesListProps {
-  initialData?: FavoriteMovie[];
-  error?: string;
-}
-
-export function FavoritesList({
-  initialData,
-  error: initialError,
-}: FavoritesListProps) {
-  const [favorites, setFavorites] = useState<FavoriteMovie[]>(
-    initialData || [],
-  );
-  const [isLoading, setIsLoading] = useState(!initialData);
-
-  const loadFavorites = async () => {
-    try {
-      setIsLoading(true);
-      const result = await getFavorites();
-      if (result.success) {
-        setFavorites(result.data || []);
-      } else {
-        toast.error(result.error || "Không thể tải danh sách yêu thích");
-      }
-    } catch {
-      toast.error("Có lỗi xảy ra khi tải danh sách yêu thích");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (initialError) {
-      toast.error(initialError);
-    }
-
-    if (!initialData) {
-      loadFavorites();
-    }
-  }, [initialData, initialError]);
-
-  const handleRemoveFavorite = (movieId: string) => {
-    setFavorites((prev) => prev.filter((fav) => fav.movieId !== movieId));
-  };
-
-  if (isLoading) {
-    return (
-      <div className="space-y-4 md:space-y-3">
-        {Array.from({ length: 8 }).map((_, index) => (
-          <FavoriteMovieCardSkeleton key={index} />
-        ))}
-      </div>
-    );
-  }
+export function FavoritesList() {
+  const favorites = useFavoriteStore((state) => state.favorites);
 
   if (favorites.length === 0) {
     return (
@@ -81,23 +25,13 @@ export function FavoritesList({
         <h1 className="text-2xl font-bold">
           Phim yêu thích ({favorites.length})
         </h1>
-        <Button variant="outline" size="sm" onClick={loadFavorites}>
-          Làm mới
-        </Button>
       </div>
 
       <div className="space-y-4 md:space-y-3">
         {favorites.map((favorite) => (
           <FavoriteMovieCard
-            key={favorite.id}
-            id={favorite.id}
-            movieId={favorite.movieId}
-            movieSlug={favorite.movieSlug}
-            movieName={favorite.movieName}
-            posterUrl={favorite.posterUrl}
-            movieType={favorite.movieType}
-            createdAt={favorite.createdAt}
-            onRemove={handleRemoveFavorite}
+            key={favorite.movieId}
+            favorite={favorite}
           />
         ))}
       </div>

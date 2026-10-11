@@ -24,8 +24,6 @@ model User {
   // Relations
   accounts     Account[]
   sessions     Session[]
-  watchHistory WatchHistory[]
-  favorites    Favorite[]
 
   @@map("users")
 }
@@ -76,46 +74,4 @@ model Verification {
 
   @@unique([identifier, value])
   @@map("verifications")
-}
-
-// Watch history model - lưu lịch sử xem phim
-
-model WatchHistory {
-  id          String   @id @default(cuid())
-  userId      String   @map("user_id")
-  movieId     String   @map("movie_id") // ID phim từ API external
-  movieSlug   String   @map("movie_slug") // Slug phim để dễ truy cập
-  movieName   String   @map("movie_name") // Tên phim
-  posterUrl   String?  @map("poster_url") // Ảnh poster
-  thumbUrl    String?  @map("thumb_url") // Ảnh thumbnail (nếu có)
-  episodeId   String?  @map("episode_id") // ID tập phim (nếu có)
-  episodeName String?  @map("episode_name") // Tên tập phim
-  watchedAt   DateTime @default(now()) @map("watched_at")
-  progress    Int      @default(0) // Thời gian đã xem (giây)
-  duration    Int      @default(0) // Tổng thời lượng (giây)
-
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, movieId, episodeId], name: "userId_movieId_episodeId")
-  @@map("watch_history")
-}
-
-// Favorite movies - phim yêu thích
-
-model Favorite {
-  id        String   @id @default(cuid())
-  userId    String   @map("user_id")
-  movieId   String   @map("movie_id") // ID phim từ API external
-  movieSlug String   @map("movie_slug") // Slug phim để dễ truy cập
-  movieName String   @map("movie_name") // Tên phim
-  posterUrl String?  @map("poster_url") // Ảnh poster
-  movieType String?  @map("movie_type") // Loại phim: "single", "series"
-  createdAt DateTime @default(now()) @map("created_at")
-
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, movieId])
-  @@map("favorites")
 }

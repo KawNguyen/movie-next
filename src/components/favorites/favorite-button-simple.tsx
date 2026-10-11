@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState } from "react";
 import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { addToFavorites, removeFromFavorites } from "@/actions/favorites";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useFavoriteStore } from "@/stores/favorite-store";
 
 interface FavoriteButtonSimpleProps {
   movieId: string;
@@ -26,38 +26,10 @@ export function FavoriteButtonSimple({
   className,
   size = "sm",
 }: FavoriteButtonSimpleProps) {
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isPending, startTransition] = useTransition();
-
-  // Check favorite status when component mounts - only for single movie
-  useEffect(() => {
-    const checkStatus = async () => {
-      try {
-        if (!movieId || typeof movieId !== "string" || !movieId.trim()) {
-          console.warn("Invalid movieId provided to FavoriteButton:", movieId);
-          setIsLoading(false);
-          return;
-        }
-
-        // Use the single-item API check for detail pages
-        const response = await fetch(
-          `/api/favorites/check/${encodeURIComponent(movieId)}`,
-        );
-        const result = await response.json();
-
-        if (result.success) {
-          setIsFavorite(result.data);
-        }
-      } catch (error) {
-        console.error("Error checking favorite status:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkStatus();
-  }, [movieId]);
+  const [isPending, setIsPending] = useState(false);
+  const isFavorite = useFavoriteStore((state) => state.isFavorite(movieId));
+  const addFavorite = useFavoriteStore((state) => state.addFavorite);
+  const removeFavorite = useFavoriteStore((state) => state.removeFavorite);
 
   const handleToggle = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -68,40 +40,21 @@ export function FavoriteButtonSimple({
       return;
     }
 
-    startTransition(async () => {
-      try {
-        if (isFavorite) {
-          const result = await removeFromFavorites(movieId);
-          if (result.success) {
-            setIsFavorite(false);
-            toast.success("Đã xóa khỏi danh sách yêu thích");
-          } else {
-            toast.error(
-              result.error || "Không thể xóa khỏi danh sách yêu thích",
-            );
-          }
-        } else {
-          const result = await addToFavorites({
-            movieId,
-            movieSlug,
-            movieName,
-            posterUrl,
-            movieType,
-          });
-          if (result.success) {
-            setIsFavorite(true);
-            toast.success("Đã thêm vào danh sách yêu thích");
-          } else {
-            toast.error(
-              result.error || "Không thể thêm vào danh sách yêu thích",
-            );
-          }
-        }
-      } catch (error) {
-        toast.error("Có lỗi xảy ra");
-        console.error("Error toggling favorite:", error);
-      }
-    });
+    setIsPending(true);
+    if (isFavorite) {
+      removeFavorite(movieId);
+      toast.success("Đã xóa khỏi danh sách yêu thích");
+    } else {
+      addFavorite({
+        movieId,
+        movieSlug,
+        movieName,
+        posterUrl: posterUrl || null,
+        movieType: movieType || null,
+      });
+      toast.success("Đã thêm vào danh sách yêu thích");
+    }
+    setIsPending(false);
   };
 
   const sizeClasses = {
@@ -115,23 +68,6 @@ export function FavoriteButtonSimple({
     md: "h-5 w-5",
     lg: "h-6 w-6",
   };
-
-  if (isLoading) {
-    return (
-      <Button
-        variant="outline"
-        size="sm"
-        className={cn(
-          sizeClasses[size],
-          "bg-black/40 text-white border-white/20 animate-pulse",
-          className,
-        )}
-        disabled
-      >
-        <Heart className={iconSizes[size]} />
-      </Button>
-    );
-  }
 
   return (
     <Button

@@ -21,33 +21,6 @@ export interface Session {
   user: User;
 }
 
-export interface WatchHistory {
-  id: string;
-  userId: string;
-  movieId: string;
-  movieSlug: string;
-  movieName: string;
-  posterUrl?: string;
-  episodeId?: string;
-  episodeName?: string;
-  watchedAt: Date;
-  progress: number;
-  duration: number;
-  user: User;
-}
-
-export interface Favorite {
-  id: string;
-  userId: string;
-  movieId: string;
-  movieSlug: string;
-  movieName: string;
-  posterUrl?: string;
-  movieType?: string;
-  createdAt: Date;
-  user: User;
-}
-
 // API Response types
 export interface ApiResponse<T> {
   success: boolean;

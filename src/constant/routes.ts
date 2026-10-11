@@ -4,8 +4,8 @@ import {
   Globe,
   PlayCircle,
   // TrendingUp,
-  History,
   Heart,
+  History,
 } from "lucide-react";
 
 export const data = {

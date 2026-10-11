@@ -162,16 +162,16 @@ export function NavUser() {
                   Profile
                 </DropdownMenuItem>
               </Link>
-              <Link href="/lich-su-xem">
-                <DropdownMenuItem>
-                  <History />
-                  Lịch sử xem
-                </DropdownMenuItem>
-              </Link>
               <Link href="/phim-yeu-thich">
                 <DropdownMenuItem>
                   <Heart />
                   Phim Yêu thích
+                </DropdownMenuItem>
+              </Link>
+              <Link href="/lich-su-xem">
+                <DropdownMenuItem>
+                  <History />
+                  Lịch sử xem
                 </DropdownMenuItem>
               </Link>
             </DropdownMenuGroup>

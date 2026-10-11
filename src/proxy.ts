@@ -24,8 +24,6 @@ export default async function proxy(req: NextRequest) {
   const isAuthenticated = !!sessionToken;
 
   const isProtectedPage =
-    pathname.startsWith("/lich-su-xem") ||
-    pathname.startsWith("/phim-yeu-thich") ||
     pathname.startsWith("/profile");
 
   const isAuthPage = ["/login"].includes(pathname);

@@ -3,12 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import type HlsType from "hls.js";
 import { Clapperboard, Loader2, RotateCw, TriangleAlert } from "lucide-react";
-import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Episode } from "@/types/movie-detail.types";
-import { useWatchEvents } from "@/hooks/use-watch-events";
 import { handleHlsError, cleanupHls } from "@/lib/hls-config";
+import { useWatchHistoryStore } from "@/stores/watch-history-store";
+import { getServerSlug } from "@/lib/movie-url";
 
 interface VideoPlayerProps {
   episode: Episode;
@@ -21,11 +21,6 @@ interface VideoPlayerProps {
 }
 
 type Status = "loading" | "ready" | "error";
-
-const formatTime = (s: number) =>
-  `${Math.floor(s / 60)}:${Math.floor(s % 60)
-    .toString()
-    .padStart(2, "0")}`;
 
 export function VideoPlayer({
   episode,
@@ -40,23 +35,9 @@ export function VideoPlayer({
   const [status, setStatus] = useState<Status>("loading");
   const [errorMsg, setErrorMsg] = useState("");
   const [attempt, setAttempt] = useState(0);
-
-  const watch = useWatchEvents({
-    movieId,
-    movieSlug,
-    movieName,
-    posterUrl,
-    thumbUrl,
-    episodeId: episode.slug,
-    episodeName: episode.name,
-  });
-
-  // Giữ handler mới nhất trong ref -> effect phát video KHÔNG phải chạy lại
-  // (và khởi tạo lại HLS) mỗi khi hook trả về function mới.
-  const watchRef = useRef(watch);
-  useEffect(() => {
-    watchRef.current = watch;
-  });
+  const hydrated = useWatchHistoryStore((state) => state.hydrated);
+  const saveProgress = useWatchHistoryStore((state) => state.saveProgress);
+  const removeProgress = useWatchHistoryStore((state) => state.removeProgress);
 
   const src = episode.link_m3u8;
 
@@ -83,62 +64,51 @@ export function VideoPlayer({
       setStatus("error");
     };
 
-    // Tải tiến độ đã lưu song song với việc tải manifest
-    const progressPromise = watchRef.current
-      .getSavedProgress()
-      .catch(() => 0) as Promise<number>;
-
     video.addEventListener(
       "loadedmetadata",
-      async () => {
+      () => {
         if (!active) return;
         setStatus("ready");
-        const saved = await progressPromise;
-        if (!active || !saved || saved < 3) return;
-        if (video.duration && saved > video.duration - 5) return;
-        video.currentTime = saved;
-        toast.success(`Tiếp tục từ ${formatTime(saved)}`);
+        if (!hydrated) return;
+        const saved = useWatchHistoryStore
+          .getState()
+          .history.find(
+            (item) =>
+              item.movieId === movieId && item.episodeId === episode.slug,
+          );
+        if (!saved || saved.progress < 3) return;
+        if (video.duration - saved.progress <= 90) return;
+        video.currentTime = Math.min(saved.progress, video.duration - 90);
       },
       { once: true, signal },
     );
 
-    // Ghi nhận tiến độ xem, giới hạn 1 lần/giây
-    let lastReport = 0;
-    video.addEventListener(
-      "timeupdate",
-      () => {
-        const now = Date.now();
-        if (now - lastReport < 1000 || !video.duration) return;
-        lastReport = now;
-        watchRef.current.handleProgressUpdate(
-          video.currentTime,
-          video.duration,
-        );
-      },
-      { signal },
-    );
-    video.addEventListener(
-      "play",
-      () => {
-        if (!video.duration) return;
-        watchRef.current.handleStartWatch(video.currentTime, video.duration);
-        watchRef.current.handleResumeWatch(video.currentTime, video.duration);
-      },
-      { signal },
-    );
-    video.addEventListener(
-      "pause",
-      () => {
-        if (!video.duration) return;
-        watchRef.current.handlePauseWatch(video.currentTime, video.duration);
-      },
-      { signal },
-    );
+    let lastSavedAt = 0;
+    const saveCurrentProgress = (force = false) => {
+      if (!video.duration || !hydrated) return;
+      const now = Date.now();
+      if (!force && now - lastSavedAt < 5000) return;
+      lastSavedAt = now;
+      saveProgress({
+        movieId,
+        movieSlug,
+        movieName,
+        posterUrl,
+        thumbUrl,
+        episodeId: episode.slug,
+        episodeName: episode.name,
+        serverSlug: getServerSlug(serverName),
+        progress: video.currentTime,
+        duration: video.duration,
+      });
+    };
+
+    video.addEventListener("timeupdate", () => saveCurrentProgress(), { signal });
+    video.addEventListener("pause", () => saveCurrentProgress(true), { signal });
     video.addEventListener(
       "ended",
       () => {
-        if (!video.duration) return;
-        watchRef.current.handleCompleteWatch(video.duration);
+        if (hydrated) removeProgress(movieId, episode.slug);
       },
       { signal },
     );
@@ -192,6 +162,7 @@ export function VideoPlayer({
     init();
 
     return () => {
+      saveCurrentProgress(true);
       active = false;
       ac.abort();
       cleanupHls(hls);
@@ -200,7 +171,20 @@ export function VideoPlayer({
       video.removeAttribute("src");
       video.load();
     };
-  }, [src, episode.slug, attempt]);
+  }, [
+    src,
+    episode.slug,
+    episode.name,
+    attempt,
+    hydrated,
+    movieId,
+    movieSlug,
+    movieName,
+    posterUrl,
+    thumbUrl,
+    saveProgress,
+    removeProgress,
+  ]);
 
   return (
     <section className="overflow-hidden rounded-xl border bg-card">
