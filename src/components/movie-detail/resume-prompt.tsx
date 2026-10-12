@@ -16,6 +16,8 @@ interface ResumePromptProps {
   servers: ResumeServer[];
   /** Tập đang được chọn ở WatchSection (nếu có) */
   currentEpisodeId?: string | null;
+  /** Server đang được chọn ở WatchSection (nếu có) */
+  currentServerSlug?: string;
   onResume: (episodeSlug: string, serverSlug: string) => void;
 }
 
@@ -33,6 +35,7 @@ export function ResumePrompt({
   movieId,
   servers,
   currentEpisodeId,
+  currentServerSlug,
   onResume,
 }: ResumePromptProps) {
   const hydrated = useWatchHistoryStore((s) => s.hydrated);
@@ -45,6 +48,17 @@ export function ResumePrompt({
     if (currentEpisodeId !== initialEpisodeRef.current) setDismissed(true);
   }, [currentEpisodeId]);
 
+  // Người dùng bắt đầu phát video (bấm play) thì không cần hỏi nữa
+  useEffect(() => {
+    if (dismissed) return;
+    const onPlay = (e: Event) => {
+      if (e.target instanceof HTMLVideoElement) setDismissed(true);
+    };
+    // Sự kiện media không nổi bọt -> bắt ở pha capture
+    document.addEventListener("play", onPlay, true);
+    return () => document.removeEventListener("play", onPlay, true);
+  }, [dismissed]);
+
   if (!hydrated || dismissed || !movie) return null;
 
   const last = movie.episodes[movie.lastEpisodeId];
@@ -53,6 +67,9 @@ export function ResumePrompt({
   const server =
     servers.find((s) => s.serverSlug === last.serverSlug) ?? servers[0];
   if (!server) return null;
+
+  // Phim lẻ (chỉ 1 tập, vd "Full"): player tự mở và tự tua, không cần hỏi
+  if (server.episodes.length <= 1) return null;
 
   // Xác định tập cần gợi ý
   let target: { slug: string; name: string } | undefined;
@@ -69,6 +86,12 @@ export function ResumePrompt({
   // Đã xem hết tập cuối, hoặc tập không còn tồn tại -> không gợi ý
   if (!target) return null;
 
+  // Đang mở đúng tập này rồi (player tự tua theo lịch sử) -> không cần hỏi
+  const isPlayingTarget =
+    currentEpisodeId === target.slug &&
+    (!currentServerSlug || currentServerSlug === server.serverSlug);
+  if (isPlayingTarget) return null;
+
   const percent = Math.min(
     100,
     Math.round((last.progress / last.duration) * 100),
@@ -83,7 +106,7 @@ export function ResumePrompt({
     <div
       role="region"
       aria-label="Gợi ý xem tiếp"
-      className="relative flex flex-col gap-3 rounded-xl border bg-card p-4 sm:flex-row sm:items-center sm:justify-between"
+      className="relative flex flex-col gap-3 rounded-xl border bg-card p-4 pr-10 sm:flex-row sm:items-center sm:justify-between"
     >
       <div className="flex min-w-0 items-center gap-3">
         <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">

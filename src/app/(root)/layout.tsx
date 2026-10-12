@@ -1,4 +1,5 @@
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
+import { FloatingSidebarButton } from "@/components/sidebar/floating-sidebar-button";
 import Header from "@/components/sidebar/header";
 
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -19,6 +20,7 @@ const Layout = ({ children }: { children: ReactNode }) => {
         <Header />
         <div className="flex flex-1 flex-col gap-4">{children}</div>
       </SidebarInset>
+      <FloatingSidebarButton />
     </SidebarProvider>
   );
 };

@@ -108,6 +108,7 @@ function WatchSectionContent({
           movieId={movie._id}
           servers={resumeServers}
           currentEpisodeId={episode?.slug}
+          currentServerSlug={server ? getServerSlug(server.server_name) : undefined}
           onResume={handleResume}
         />
       )}
