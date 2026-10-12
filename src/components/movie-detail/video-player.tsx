@@ -22,6 +22,10 @@ interface VideoPlayerProps {
 
 type Status = "loading" | "ready" | "error";
 
+const SAVE_INTERVAL_MS = 5000;
+const MIN_RESUME_SECONDS = 3;
+const MIN_REMAINING_SECONDS = 90;
+
 export function VideoPlayer({
   episode,
   serverName,
@@ -35,9 +39,28 @@ export function VideoPlayer({
   const [status, setStatus] = useState<Status>("loading");
   const [errorMsg, setErrorMsg] = useState("");
   const [attempt, setAttempt] = useState(0);
-  const hydrated = useWatchHistoryStore((state) => state.hydrated);
-  const saveProgress = useWatchHistoryStore((state) => state.saveProgress);
-  const removeProgress = useWatchHistoryStore((state) => state.removeProgress);
+
+  // Giữ meta mới nhất mà KHÔNG làm effect chạy lại (tránh destroy HLS / giật video)
+  const metaRef = useRef({
+    movieId,
+    movieSlug,
+    movieName,
+    posterUrl,
+    thumbUrl,
+    episodeId: episode.slug,
+    episodeName: episode.name,
+    serverSlug: getServerSlug(serverName),
+  });
+  metaRef.current = {
+    movieId,
+    movieSlug,
+    movieName,
+    posterUrl,
+    thumbUrl,
+    episodeId: episode.slug,
+    episodeName: episode.name,
+    serverSlug: getServerSlug(serverName),
+  };
 
   const src = episode.link_m3u8;
 
@@ -55,6 +78,11 @@ export function VideoPlayer({
     let hls: HlsType | null = null;
     const ac = new AbortController();
     const { signal } = ac;
+    const store = useWatchHistoryStore;
+
+    // Snapshot meta của ĐÚNG tập này. Không đọc metaRef.current trong cleanup,
+    // vì lúc đó ref đã bị gán sang tập mới -> lưu nhầm thời gian tập cũ cho tập mới.
+    const meta = { ...metaRef.current };
 
     setStatus("loading");
 
@@ -64,55 +92,67 @@ export function VideoPlayer({
       setStatus("error");
     };
 
+    // ---------- Resume ----------
+    const seekToSaved = () => {
+      if (!active) return;
+      const saved =
+        store.getState().movies[meta.movieId]?.episodes[meta.episodeId];
+      if (!saved || saved.completed) return;
+      if (saved.progress < MIN_RESUME_SECONDS) return;
+      if (video.duration - saved.progress <= MIN_REMAINING_SECONDS) return;
+      video.currentTime = saved.progress;
+    };
+
     video.addEventListener(
       "loadedmetadata",
       () => {
         if (!active) return;
         setStatus("ready");
-        if (!hydrated) return;
-        const saved = useWatchHistoryStore
-          .getState()
-          .history.find(
-            (item) =>
-              item.movieId === movieId && item.episodeId === episode.slug,
-          );
-        if (!saved || saved.progress < 3) return;
-        if (video.duration - saved.progress <= 90) return;
-        video.currentTime = Math.min(saved.progress, video.duration - 90);
+        if (store.persist.hasHydrated()) {
+          seekToSaved();
+        } else {
+          // Chưa hydrate xong -> đợi rồi mới seek
+          const unsub = store.persist.onFinishHydration(() => {
+            unsub();
+            seekToSaved();
+          });
+        }
       },
       { once: true, signal },
     );
 
+    // ---------- Save ----------
     let lastSavedAt = 0;
-    const saveCurrentProgress = (force = false) => {
-      if (!video.duration || !hydrated) return;
+    const save = (force = false) => {
+      // Chưa hydrate thì không ghi, tránh đè dữ liệu cũ trong localStorage
+      if (!store.persist.hasHydrated()) return;
+      if (!video.duration || !Number.isFinite(video.duration)) return;
+
       const now = Date.now();
-      if (!force && now - lastSavedAt < 5000) return;
+      if (!force && now - lastSavedAt < SAVE_INTERVAL_MS) return;
       lastSavedAt = now;
-      saveProgress({
-        movieId,
-        movieSlug,
-        movieName,
-        posterUrl,
-        thumbUrl,
-        episodeId: episode.slug,
-        episodeName: episode.name,
-        serverSlug: getServerSlug(serverName),
+
+      store.getState().saveProgress({
+        ...meta,
         progress: video.currentTime,
         duration: video.duration,
       });
     };
 
-    video.addEventListener("timeupdate", () => saveCurrentProgress(), { signal });
-    video.addEventListener("pause", () => saveCurrentProgress(true), { signal });
-    video.addEventListener(
-      "ended",
+    video.addEventListener("timeupdate", () => save(), { signal });
+    video.addEventListener("pause", () => save(true), { signal });
+    // ended: currentTime ~ duration nên store sẽ đánh dấu completed = true
+    video.addEventListener("ended", () => save(true), { signal });
+    document.addEventListener(
+      "visibilitychange",
       () => {
-        if (hydrated) removeProgress(movieId, episode.slug);
+        if (document.visibilityState === "hidden") save(true);
       },
       { signal },
     );
+    window.addEventListener("pagehide", () => save(true), { signal });
 
+    // ---------- HLS ----------
     const init = async () => {
       // hls.js khá nặng (~500KB) -> chỉ tải khi thật sự cần phát
       const { default: Hls } = await import("hls.js");
@@ -162,7 +202,7 @@ export function VideoPlayer({
     init();
 
     return () => {
-      saveCurrentProgress(true);
+      save(true); // đổi tập / unmount vẫn lưu
       active = false;
       ac.abort();
       cleanupHls(hls);
@@ -171,20 +211,9 @@ export function VideoPlayer({
       video.removeAttribute("src");
       video.load();
     };
-  }, [
-    src,
-    episode.slug,
-    episode.name,
-    attempt,
-    hydrated,
-    movieId,
-    movieSlug,
-    movieName,
-    posterUrl,
-    thumbUrl,
-    saveProgress,
-    removeProgress,
-  ]);
+    // Chỉ chạy lại khi đổi nguồn phát / bấm thử lại.
+    // Meta (tên phim, poster...) đọc qua metaRef nên không cần nằm trong deps.
+  }, [src, episode.slug, attempt]);
 
   return (
     <section className="overflow-hidden rounded-xl border bg-card">
@@ -238,4 +267,4 @@ export function VideoPlayer({
       </div>
     </section>
   );
-}
+} 

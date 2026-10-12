@@ -24,14 +24,19 @@ export default async function proxy(req: NextRequest) {
   const isAuthenticated = !!sessionToken;
 
   const isProtectedPage =
-    pathname.startsWith("/profile");
+    pathname.startsWith("/profile") ||
+    pathname.startsWith("/lich-su-xem") ||
+    pathname.startsWith("/phim-yeu-thich");
 
   const isAuthPage = ["/login"].includes(pathname);
 
   // Redirect to login if trying to access protected pages without auth
   if (isProtectedPage && !isAuthenticated) {
     const loginUrl = new URL("/login", req.url);
-    loginUrl.searchParams.set("redirect", pathname);
+    loginUrl.searchParams.set(
+      "redirect",
+      `${pathname}${req.nextUrl.search}`,
+    );
     loginUrl.searchParams.set("debug", "no-session");
 
     return NextResponse.redirect(loginUrl);

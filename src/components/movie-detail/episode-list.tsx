@@ -1,9 +1,16 @@
 "use client";
 
-import { memo, useCallback, useEffect, useMemo, useRef } from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { MouseEvent } from "react";
 
-import { Headphones, Play, ScrollText, Subtitles } from "lucide-react";
+import { Check, Headphones, Play, ScrollText, Subtitles } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -17,6 +24,7 @@ import {
 
 import { Movie, Server } from "@/types/movie-detail.types";
 import { getServerLabel } from "@/lib/episode-params";
+import { useWatchHistoryStore } from "@/stores/watch-history-store";
 
 interface EpisodeListProps {
   movie: Movie;
@@ -59,6 +67,15 @@ function EpisodeListBase({
   const gridRef = useRef<HTMLDivElement>(null);
 
   const server = episodes[activeServer];
+
+  // Tiến độ các tập của phim này (reference chỉ đổi khi phim này có thay đổi)
+  const watchedEpisodes = useWatchHistoryStore(
+    (s) => s.movies[movie._id]?.episodes,
+  );
+
+  // Chỉ hiện tick sau khi mount để tránh hydration mismatch với SSR
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   // Chọn server mới thì chuyển sang tập 1.
   const handleServerChange = useCallback(
@@ -111,26 +128,72 @@ function EpisodeListBase({
         const tap = i + 1;
         const selected = tap === activeTap;
 
+        const record = mounted ? watchedEpisodes?.[ep.slug] : undefined;
+        const done = !!record?.completed;
+        const percent =
+          record && !record.completed && record.duration > 0
+            ? Math.min(
+                100,
+                Math.max(
+                  0,
+                  Math.round((record.progress / record.duration) * 100),
+                ),
+              )
+            : 0;
+
+        const stateLabel = done
+          ? " (đã xem)"
+          : percent > 0
+            ? ` (đã xem ${percent}%)`
+            : "";
+
         return (
           <button
             key={ep.slug}
             type="button"
             data-tap={tap}
             aria-current={selected ? "true" : undefined}
-            title={ep.name}
-            aria-label={ep.name}
+            title={`${ep.name}${stateLabel}`}
+            aria-label={`${ep.name}${stateLabel}`}
             disabled={pending}
-            className={`h-10 truncate rounded-md border px-2 text-xs font-medium tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed ${
+            className={`relative h-10 overflow-hidden truncate rounded-md border px-2 text-xs font-medium tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed ${
               selected
                 ? "border-primary bg-primary text-primary-foreground"
-                : "bg-background hover:bg-muted"
+                : done
+                  ? "bg-muted/60 text-muted-foreground hover:bg-muted"
+                  : "bg-background hover:bg-muted"
             }`}
           >
             {getEpisodeLabel(ep.name)}
+
+            {/* Đã xem xong: dấu tick nhỏ ở góc */}
+            {done && (
+              <Check
+                aria-hidden
+                className={`absolute right-1 top-1 size-3 ${
+                  selected ? "text-primary-foreground" : "text-primary"
+                }`}
+              />
+            )}
+
+            {/* Đang xem dở: thanh tiến độ mỏng ở đáy */}
+            {percent > 0 && (
+              <span
+                aria-hidden
+                className="absolute inset-x-0 bottom-0 h-0.5 bg-foreground/10"
+              >
+                <span
+                  className={`block h-full ${
+                    selected ? "bg-primary-foreground" : "bg-primary"
+                  }`}
+                  style={{ width: `${percent}%` }}
+                />
+              </span>
+            )}
           </button>
         );
       }),
-    [server, activeTap, pending],
+    [server, activeTap, pending, mounted, watchedEpisodes],
   );
 
   const completed = movie.status === "completed";
@@ -189,7 +252,7 @@ function EpisodeListBase({
         )}
       </div>
 
-      <ScrollArea className="mt-3 h-72 shrink-0 lg:h-auto lg:min-h-0 lg:flex-1 [&>[data-radix-scroll-area-viewport]>div]:!block">
+      <ScrollArea className="mt-3 h-72 shrink-0 lg:h-auto lg:min-h-0 lg:flex-1 [&>[data-radix-scroll-area-viewport]>div]:block!">
         <div
           ref={gridRef}
           onClick={handleGridClick}

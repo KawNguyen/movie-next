@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useFavoriteStore } from "@/stores/favorite-store";
+import { useAuth } from "@/components/provider/auth-provider";
+import { useRouter } from "next/navigation";
 
 interface FavoriteButtonSimpleProps {
   movieId: string;
@@ -26,6 +28,8 @@ export function FavoriteButtonSimple({
   className,
   size = "sm",
 }: FavoriteButtonSimpleProps) {
+  const { user, loading } = useAuth();
+  const router = useRouter();
   const [isPending, setIsPending] = useState(false);
   const isFavorite = useFavoriteStore((state) => state.isFavorite(movieId));
   const addFavorite = useFavoriteStore((state) => state.addFavorite);
@@ -34,6 +38,13 @@ export function FavoriteButtonSimple({
   const handleToggle = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (loading) return;
+    if (!user) {
+      const redirect = `${window.location.pathname}${window.location.search}`;
+      router.push(`/login?redirect=${encodeURIComponent(redirect)}`);
+      return;
+    }
 
     if (!movieId || typeof movieId !== "string" || !movieId.trim()) {
       toast.error("MovieId không hợp lệ");
@@ -82,7 +93,7 @@ export function FavoriteButtonSimple({
         className,
       )}
       onClick={handleToggle}
-      disabled={isPending}
+      disabled={isPending || loading}
     >
       <Heart className={cn(iconSizes[size], isFavorite && "fill-current")} />
     </Button>

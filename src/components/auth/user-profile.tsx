@@ -66,7 +66,7 @@ export function UserProfile() {
             <span>Profile</span>
           </DropdownMenuItem>
         </Link>
-        <Link href="/yeu-thich">
+        <Link href="/phim-yeu-thich">
           <DropdownMenuItem>
             <Heart className="mr-2 h-4 w-4" />
             <span>Favorites</span>

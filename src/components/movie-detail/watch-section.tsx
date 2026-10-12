@@ -1,9 +1,16 @@
 "use client";
 
-import { Suspense, useCallback, useMemo, useTransition } from "react";
+import {
+  Suspense,
+  useCallback,
+  useMemo,
+  useState,
+  useTransition,
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { VideoPlayer } from "./video-player";
 import { EpisodeList } from "./episode-list";
+import { ResumePrompt, type ResumeServer } from "./resume-prompt";
 import { WatchSectionSkeleton } from "./skeletons";
 import { MovieDetailResponse } from "@/types/movie-detail.types";
 import {
@@ -29,6 +36,10 @@ function WatchSectionContent({
   const [isPending, startTransition] = useTransition();
   const serverParam = searchParams.get("server");
   const tapParam = searchParams.get("tap");
+
+  // Chỉ gợi ý "xem tiếp" khi user vào trang phim "trần" (chưa có ?tap=).
+  // Nếu vào từ trang lịch sử (đã kèm tap) thì đang phát đúng tập rồi, không cần hỏi.
+  const [showResumePrompt] = useState(() => !tapParam);
 
   const { serverIndex, tap, episode } = useMemo(() => {
     const list = episodes ?? [];
@@ -60,31 +71,70 @@ function WatchSectionContent({
     [episodes, router, searchParams],
   );
 
+  // Dữ liệu cho ResumePrompt: gom tập theo server
+  const resumeServers = useMemo<ResumeServer[]>(
+    () =>
+      (episodes ?? []).map((s) => ({
+        serverSlug: getServerSlug(s.server_name),
+        episodes: (s.server_data ?? []).map((e) => ({
+          slug: e.slug,
+          name: e.name,
+        })),
+      })),
+    [episodes],
+  );
+
+  const handleResume = useCallback(
+    (episodeSlug: string, serverSlug: string) => {
+      const sIdx = (episodes ?? []).findIndex(
+        (s) => getServerSlug(s.server_name) === serverSlug,
+      );
+      if (sIdx < 0) return;
+      const eIdx = episodes[sIdx].server_data.findIndex(
+        (e) => e.slug === episodeSlug,
+      );
+      if (eIdx < 0) return;
+      handleSelect(sIdx, eIdx + 1);
+    },
+    [episodes, handleSelect],
+  );
+
   const server = episodes[serverIndex];
 
   return (
-    <div className={MAIN_GRID}>
-      {episode && server && (
-        <VideoPlayer
-          episode={episode}
-          serverName={server.server_name}
+    <div className="space-y-4">
+      {showResumePrompt && (
+        <ResumePrompt
           movieId={movie._id}
-          movieSlug={movie.slug}
-          movieName={movie.name}
-          posterUrl={movie.poster_url}
-          thumbUrl={movie.thumb_url}
+          servers={resumeServers}
+          currentEpisodeId={episode?.slug}
+          onResume={handleResume}
         />
       )}
-      <div className="relative min-w-0">
-        <div className="lg:absolute lg:inset-0">
-          <EpisodeList
-            movie={movie}
-            episodes={episodes}
-            activeServer={serverIndex}
-            activeTap={tap}
-            pending={isPending}
-            onSelect={handleSelect}
+
+      <div className={MAIN_GRID}>
+        {episode && server && (
+          <VideoPlayer
+            episode={episode}
+            serverName={server.server_name}
+            movieId={movie._id}
+            movieSlug={movie.slug}
+            movieName={movie.name}
+            posterUrl={movie.poster_url}
+            thumbUrl={movie.thumb_url}
           />
+        )}
+        <div className="relative min-w-0">
+          <div className="lg:absolute lg:inset-0">
+            <EpisodeList
+              movie={movie}
+              episodes={episodes}
+              activeServer={serverIndex}
+              activeTap={tap}
+              pending={isPending}
+              onSelect={handleSelect}
+            />
+          </div>
         </div>
       </div>
     </div>

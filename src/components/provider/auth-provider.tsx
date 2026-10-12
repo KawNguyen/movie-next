@@ -1,8 +1,10 @@
 "use client";
 
-import { createContext, useContext } from "react";
+import { createContext, useContext, useEffect } from "react";
 import { useSession } from "@/lib/auth-client";
 import type { Session, User } from "@/lib/auth";
+import { useFavoriteStore } from "@/stores/favorite-store";
+import { useWatchHistoryStore } from "@/stores/watch-history-store";
 
 interface AuthContextType {
   session: Session | null;
@@ -18,6 +20,15 @@ const AuthContext = createContext<AuthContextType>({
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { data: session, isPending: loading } = useSession();
+  const syncFavorites = useFavoriteStore((state) => state.syncFromServer);
+  const syncWatchHistory = useWatchHistoryStore(
+    (state) => state.syncFromServer,
+  );
+
+  useEffect(() => {
+    if (loading || !session?.user) return;
+    void Promise.all([syncFavorites(), syncWatchHistory()]);
+  }, [loading, session?.user, syncFavorites, syncWatchHistory]);
 
   return (
     <AuthContext.Provider
