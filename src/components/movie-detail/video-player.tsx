@@ -132,11 +132,16 @@ export function VideoPlayer({
       if (!force && now - lastSavedAt < SAVE_INTERVAL_MS) return;
       lastSavedAt = now;
 
-      store.getState().saveProgress({
-        ...meta,
-        progress: video.currentTime,
-        duration: video.duration,
-      });
+      // force = pause / ended / ẩn tab / đóng tab / đổi tập -> cho phép gửi server sớm.
+      // Còn timeupdate thường chỉ lưu local, server nhận thưa (~60s/lần).
+      store.getState().saveProgress(
+        {
+          ...meta,
+          progress: video.currentTime,
+          duration: video.duration,
+        },
+        { flush: force },
+      );
     };
 
     video.addEventListener("timeupdate", () => save(), { signal });
@@ -267,4 +272,4 @@ export function VideoPlayer({
       </div>
     </section>
   );
-} 
+}

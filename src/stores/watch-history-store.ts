@@ -1,7 +1,9 @@
 "use client";
 
+import { ProgressPayload, queueProgress, sendWatchHistoryAction, setSyncAuth, uploadWatchHistoryBulk } from "@/lib/watch-history-sync";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+
 
 /* ---------- Types ---------- */
 
@@ -46,6 +48,21 @@ export interface SaveWatchProgressInput {
   duration: number;
 }
 
+interface ServerRow {
+  movieId: string;
+  movieSlug: string;
+  movieName: string;
+  posterUrl: string | null;
+  thumbUrl: string | null;
+  episodeId: string;
+  serverSlug: string;
+  episodeName: string;
+  progress: number;
+  duration: number;
+  completed: boolean;
+  updatedAt: string;
+}
+
 interface WatchHistoryState {
   movies: Record<string, MovieWatchState>;
 }
@@ -53,11 +70,19 @@ interface WatchHistoryState {
 interface WatchHistoryStore extends WatchHistoryState {
   hydrated: boolean;
   setHydrated: (hydrated: boolean) => void;
-  saveProgress: (input: SaveWatchProgressInput) => void;
+  /**
+   * Lưu local ngay. Lên server thì thưa (xem watch-history-sync.ts).
+   * options.flush = true: gửi sớm (pause, ẩn tab, đóng tab, đổi tập, ended).
+   */
+  saveProgress: (
+    input: SaveWatchProgressInput,
+    options?: { flush?: boolean },
+  ) => void;
   removeEpisode: (movieId: string, episodeId: string) => void;
   removeMovie: (movieId: string) => void;
   clearHistory: () => void;
-  syncFromServer: () => Promise<void>;
+  /** force = true: bỏ qua cache phiên, dùng sau khi đăng nhập / đăng xuất */
+  syncFromServer: (options?: { force?: boolean }) => Promise<void>;
 }
 
 /* ---------- Constants ---------- */
@@ -66,6 +91,120 @@ const MIN_SAVE_SECONDS = 3;
 const COMPLETE_REMAINING_SECONDS = 90;
 const COMPLETE_RATIO = 0.95;
 const MAX_MOVIES = 50;
+
+const SYNC_CACHE_KEY = "movie-next-watch-history:sync";
+const SYNC_TTL_MS = 10 * 60 * 1000;
+
+/* ---------- Sync helpers ---------- */
+
+function readSyncCache(): { t: number; auth: boolean } | null {
+  try {
+    const raw = sessionStorage.getItem(SYNC_CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeSyncCache(auth: boolean) {
+  try {
+    sessionStorage.setItem(
+      SYNC_CACHE_KEY,
+      JSON.stringify({ t: Date.now(), auth }),
+    );
+  } catch {
+    /* sessionStorage không dùng được: bỏ qua */
+  }
+}
+
+function toPayload(movie: MovieWatchState, ep: EpisodeProgress): ProgressPayload {
+  return {
+    movieId: movie.movieId,
+    movieSlug: movie.movieSlug,
+    movieName: movie.movieName,
+    posterUrl: movie.posterUrl,
+    thumbUrl: movie.thumbUrl,
+    episodeId: ep.episodeId,
+    serverSlug: ep.serverSlug,
+    episodeName: ep.episodeName || ep.episodeId,
+    progress: ep.progress,
+    duration: ep.duration,
+    completed: ep.completed,
+    updatedAt: ep.updatedAt,
+  };
+}
+
+/** Gộp các dòng phẳng từ server vào store (mỗi tập: bản updatedAt mới hơn thắng) */
+function mergeServerRows(
+  local: Record<string, MovieWatchState>,
+  rows: ServerRow[],
+): Record<string, MovieWatchState> {
+  const merged: Record<string, MovieWatchState> = {};
+  for (const [id, m] of Object.entries(local)) {
+    merged[id] = { ...m, episodes: { ...m.episodes } };
+  }
+
+  for (const row of rows) {
+    let movie = merged[row.movieId];
+    if (!movie) {
+      movie = merged[row.movieId] = {
+        movieId: row.movieId,
+        movieSlug: row.movieSlug,
+        movieName: row.movieName,
+        posterUrl: row.posterUrl,
+        thumbUrl: row.thumbUrl,
+        lastEpisodeId: row.episodeId,
+        updatedAt: row.updatedAt,
+        episodes: {},
+      };
+    }
+
+    const current = movie.episodes[row.episodeId];
+    if (!current || row.updatedAt > current.updatedAt) {
+      movie.episodes[row.episodeId] = {
+        episodeId: row.episodeId,
+        serverSlug: row.serverSlug,
+        episodeName: row.episodeName,
+        progress: row.progress,
+        duration: row.duration,
+        completed: row.completed,
+        updatedAt: row.updatedAt,
+      };
+      // metadata phim lấy từ bản ghi mới nhất
+      if (row.updatedAt > movie.updatedAt) {
+        movie.movieSlug = row.movieSlug;
+        movie.movieName = row.movieName;
+        movie.posterUrl = row.posterUrl ?? movie.posterUrl;
+        movie.thumbUrl = row.thumbUrl ?? movie.thumbUrl;
+      }
+    }
+  }
+
+  // Tính lại tập gần nhất + thời điểm cập nhật của từng phim
+  for (const movie of Object.values(merged)) {
+    let latest: EpisodeProgress | undefined;
+    for (const ep of Object.values(movie.episodes)) {
+      if (!latest || ep.updatedAt > latest.updatedAt) latest = ep;
+    }
+    if (latest) {
+      movie.lastEpisodeId = latest.episodeId;
+      movie.updatedAt = latest.updatedAt;
+    }
+  }
+
+  // Giới hạn số phim
+  const ids = Object.keys(merged);
+  if (ids.length > MAX_MOVIES) {
+    const keep = new Set(
+      ids
+        .sort((a, b) => merged[b].updatedAt.localeCompare(merged[a].updatedAt))
+        .slice(0, MAX_MOVIES),
+    );
+    for (const id of Object.keys(merged)) if (!keep.has(id)) delete merged[id];
+  }
+
+  return merged;
+}
 
 /* ---------- Store ---------- */
 
@@ -76,7 +215,7 @@ export const useWatchHistoryStore = create<WatchHistoryStore>()(
       hydrated: false,
       setHydrated: (hydrated) => set({ hydrated }),
 
-      saveProgress: (input) => {
+      saveProgress: (input, options) => {
         // Dữ liệu không hợp lệ -> bỏ qua, KHÔNG xóa tiến độ cũ
         if (
           !input.movieId ||
@@ -134,24 +273,30 @@ export const useWatchHistoryStore = create<WatchHistoryStore>()(
 
           return { movies };
         });
-        void fetch("/api/watch-history", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...input,
+
+        // Lên server: gom + gửi thưa (khách chưa đăng nhập thì không gửi gì)
+        queueProgress(
+          {
+            movieId: input.movieId,
+            movieSlug: input.movieSlug,
+            movieName: input.movieName,
+            posterUrl: input.posterUrl || null,
+            thumbUrl: input.thumbUrl || null,
+            episodeId: input.episodeId,
+            serverSlug: input.serverSlug,
+            episodeName: input.episodeName || input.episodeId,
             progress: Math.floor(input.progress),
             duration: Math.floor(input.duration),
             completed,
             updatedAt: now,
-          }),
-        }).catch((error) =>
-          console.error("Watch history sync failed:", error),
+          },
+          options?.flush,
         );
       },
 
       // Xóa 1 tập (vd: user bấm "bỏ khỏi lịch sử")
-      removeEpisode: (movieId, episodeId) =>
-        (set((state) => {
+      removeEpisode: (movieId, episodeId) => {
+        set((state) => {
           const movie = state.movies[movieId];
           if (!movie || !movie.episodes[episodeId]) return state;
 
@@ -178,114 +323,69 @@ export const useWatchHistoryStore = create<WatchHistoryStore>()(
               [movieId]: { ...movie, episodes, lastEpisodeId },
             },
           };
-        }),
-        void fetch("/api/watch-history", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "remove", movieId, episodeId }),
-        }).catch((error) =>
-          console.error("Watch history sync failed:", error),
-        )),
+        });
+        sendWatchHistoryAction({ action: "remove", movieId, episodeId });
+      },
 
-      removeMovie: (movieId) =>
-        (set((state) => {
+      removeMovie: (movieId) => {
+        set((state) => {
           if (!state.movies[movieId]) return state;
           const { [movieId]: _removed, ...rest } = state.movies;
           return { movies: rest };
-        }),
-        void fetch("/api/watch-history", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "remove", movieId }),
-        }).catch((error) =>
-          console.error("Watch history sync failed:", error),
-        )),
+        });
+        sendWatchHistoryAction({ action: "remove", movieId });
+      },
 
       clearHistory: () => {
         set({ movies: {} });
-        void fetch("/api/watch-history", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "clear" }),
-        }).catch((error) =>
-          console.error("Watch history sync failed:", error),
-        );
+        sendWatchHistoryAction({ action: "clear" });
       },
-      syncFromServer: async () => {
+
+      syncFromServer: async ({ force = false } = {}) => {
+        // Mỗi phiên chỉ hỏi server ~10 phút/lần; vẫn phải báo trạng thái đăng nhập
+        // cho hàng đợi, nếu không tiến độ sẽ bị giữ lại mãi.
+        if (!force) {
+          const cache = readSyncCache();
+          if (cache && Date.now() - cache.t < SYNC_TTL_MS) {
+            setSyncAuth(cache.auth);
+            return;
+          }
+        }
+
         try {
-          const response = await fetch("/api/watch-history");
+          const response = await fetch("/api/watch-history", {
+            cache: "no-store",
+          });
           if (!response.ok) return;
+
           const result = await response.json();
-          if (!result.authenticated) return;
+          const authenticated = Boolean(result.authenticated);
+          setSyncAuth(authenticated);
+          writeSyncCache(authenticated);
+          if (!authenticated) return;
 
-          const serverHistory = result.data as Array<{
-            movieId: string;
-            movieSlug: string;
-            movieName: string;
-            posterUrl: string | null;
-            thumbUrl: string | null;
-            episodeId: string;
-            serverSlug: string;
-            episodeName: string;
-            progress: number;
-            duration: number;
-            completed: boolean;
-            updatedAt: string;
-          }>;
-          const localMovies = get().movies;
-          const merged = { ...localMovies };
+          const rows = result.data as ServerRow[];
+          const local = get().movies;
 
-          for (const item of serverHistory) {
-            const localMovie = merged[item.movieId];
-            const localEpisode = localMovie?.episodes[item.episodeId];
-            if (
-              !localEpisode ||
-              item.updatedAt > localEpisode.updatedAt
-            ) {
-              merged[item.movieId] = {
-                movieId: item.movieId,
-                movieSlug: item.movieSlug,
-                movieName: item.movieName,
-                posterUrl: item.posterUrl,
-                thumbUrl: item.thumbUrl,
-                lastEpisodeId: localMovie?.lastEpisodeId || item.episodeId,
-                updatedAt: item.updatedAt,
-                episodes: {
-                  ...localMovie?.episodes,
-                  [item.episodeId]: {
-                    episodeId: item.episodeId,
-                    serverSlug: item.serverSlug,
-                    episodeName: item.episodeName,
-                    progress: item.progress,
-                    duration: item.duration,
-                    completed: item.completed,
-                    updatedAt: item.updatedAt,
-                  },
-                },
-              };
+          // 1) kéo: gộp server vào local
+          set({ movies: mergeServerRows(local, rows) });
+
+          // 2) đẩy: chỉ những tập local mới hơn / chưa có trên server, gói thành bulk
+          const serverIndex = new Map(
+            rows.map((r) => [`${r.movieId}:${r.episodeId}`, r.updatedAt]),
+          );
+          const uploads: ProgressPayload[] = [];
+          for (const movie of Object.values(local)) {
+            for (const ep of Object.values(movie.episodes)) {
+              const serverAt = serverIndex.get(`${movie.movieId}:${ep.episodeId}`);
+              if (!serverAt || ep.updatedAt > serverAt) {
+                uploads.push(toPayload(movie, ep));
+              }
             }
           }
-          set({ movies: merged });
-
-          const uploads = Object.values(localMovies).flatMap((movie) =>
-            Object.values(movie.episodes).map((episode) =>
-              fetch("/api/watch-history", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  movieId: movie.movieId,
-                  movieSlug: movie.movieSlug,
-                  movieName: movie.movieName,
-                  posterUrl: movie.posterUrl,
-                  thumbUrl: movie.thumbUrl,
-                  ...episode,
-                }),
-              }),
-            ),
-          );
-          await Promise.all(uploads);
+          if (uploads.length > 0) await uploadWatchHistoryBulk(uploads);
         } catch (error) {
-          console.error("Watch history hydration failed:", error);
+          console.error("Watch history sync failed:", error);
         }
       },
     }),
