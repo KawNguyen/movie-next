@@ -14,16 +14,18 @@ export default function Header() {
     >
       <div className="flex w-full items-center gap-1 px-2 lg:gap-2 lg:px-4">
         <div className="h-4 flex items-center gap-2">
-          <SidebarTrigger className="-ml-1" />
+          <SidebarTrigger className="-ml-1" data-tour="sidebar" />
           <Separator
             orientation="vertical"
             className="mx-2 data-[orientation=vertical]:h-4"
           />
           <AppBreadcrumb />
         </div>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-2" data-tour="search">
           <SearchMobile />
-          <SimpleThemeToggle />
+          <div data-tour="theme">
+            <SimpleThemeToggle />
+          </div>
         </div>
       </div>
     </header>

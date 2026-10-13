@@ -82,6 +82,7 @@ export function NavUser() {
             size="lg"
             asChild
             onClick={() => router.push("/login")}
+            data-tour="login"
           >
             <div>
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg">

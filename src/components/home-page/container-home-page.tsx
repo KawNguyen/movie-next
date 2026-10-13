@@ -21,7 +21,7 @@ interface ContainerHomePageProps {
 
 const ContainerHomePage = ({ initialData }: ContainerHomePageProps) => {
   return (
-    <main className="space-y-6 p-4">
+    <main className="space-y-6 p-4" data-tour="movie-list">
       <HomeHero movies={initialData?.items || []} />
 
       <MovieList
