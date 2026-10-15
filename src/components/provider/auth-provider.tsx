@@ -27,7 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (loading || !session?.user) return;
-    void Promise.all([syncFavorites(), syncWatchHistory()]);
+    void Promise.all([syncFavorites(), syncWatchHistory(session.user.id)]);
   }, [loading, session?.user, syncFavorites, syncWatchHistory]);
 
   return (

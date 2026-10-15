@@ -478,28 +478,28 @@ export function GalaxyBackground({
 
       {/* Tinh vân: các đám mây màu (lục lam, xanh dương, cam, đỏ hồng) trôi chậm trên nền đen */}
       <div
-        className="galaxy-blob galaxy-blob-a -left-[12%] -top-[18%] h-[60vmax] w-[60vmax]"
+        className="galaxy-blob galaxy-blob-a left-[-12%] top-[-18%] h-[60vmax] w-[60vmax]"
         style={{
           background:
             "radial-gradient(circle, rgba(0, 175, 165, 0.3), transparent 70%)",
         }}
       />
       <div
-        className="galaxy-blob galaxy-blob-b -bottom-[22%] -right-[12%] h-[65vmax] w-[65vmax]"
+        className="galaxy-blob galaxy-blob-b bottom-[-22%] right-[-12%] h-[65vmax] w-[65vmax]"
         style={{
           background:
             "radial-gradient(circle, rgba(25, 100, 230, 0.32), transparent 70%)",
         }}
       />
       <div
-        className="galaxy-blob galaxy-blob-c right-[2%] -top-[5%] h-[42vmax] w-[42vmax]"
+        className="galaxy-blob galaxy-blob-c right-[2%] top-[-5%] h-[42vmax] w-[42vmax]"
         style={{
           background:
             "radial-gradient(circle, rgba(255, 125, 40, 0.2), transparent 70%)",
         }}
       />
       <div
-        className="galaxy-blob galaxy-blob-a -bottom-[10%] left-[8%] h-[38vmax] w-[38vmax]"
+        className="galaxy-blob galaxy-blob-a bottom-[-10%] left-[8%] h-[38vmax] w-[38vmax]"
         style={{
           background:
             "radial-gradient(circle, rgba(225, 45, 75, 0.16), transparent 70%)",

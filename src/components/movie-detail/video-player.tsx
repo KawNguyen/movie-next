@@ -9,6 +9,7 @@ import { Episode } from "@/types/movie-detail.types";
 import { handleHlsError, cleanupHls } from "@/lib/hls-config";
 import { useWatchHistoryStore } from "@/stores/watch-history-store";
 import { getServerSlug } from "@/lib/movie-url";
+import { setLiveSaver } from "@/lib/watch-history-sync";
 
 interface VideoPlayerProps {
   episode: Episode;
@@ -18,12 +19,16 @@ interface VideoPlayerProps {
   movieName: string;
   posterUrl?: string;
   thumbUrl?: string;
+  /** Tổng số tập của phim (từ dữ liệu chi tiết phim). null/undefined nếu không biết */
+  totalEpisodes?: number | null;
 }
 
 type Status = "loading" | "ready" | "error";
 
-const SAVE_INTERVAL_MS = 5000;
-const MIN_RESUME_SECONDS = 3;
+const LOCAL_SAVE_INTERVAL_MS = 15_000; // lưu localStorage tối đa mỗi 15s khi đang xem
+const PAUSE_PUSH_DELAY_MS = 3_000;
+const PAUSE_PUSH_MIN_GAP_MS = 10_000;
+const MIN_RESUME_SECONDS = 30;
 const MIN_REMAINING_SECONDS = 90;
 
 export function VideoPlayer({
@@ -34,6 +39,7 @@ export function VideoPlayer({
   movieName,
   posterUrl,
   thumbUrl,
+  totalEpisodes,
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [status, setStatus] = useState<Status>("loading");
@@ -47,6 +53,7 @@ export function VideoPlayer({
     movieName,
     posterUrl,
     thumbUrl,
+    totalEpisodes: totalEpisodes ?? null,
     episodeId: episode.slug,
     episodeName: episode.name,
     serverSlug: getServerSlug(serverName),
@@ -57,6 +64,7 @@ export function VideoPlayer({
     movieName,
     posterUrl,
     thumbUrl,
+    totalEpisodes: totalEpisodes ?? null,
     episodeId: episode.slug,
     episodeName: episode.name,
     serverSlug: getServerSlug(serverName),
@@ -81,7 +89,7 @@ export function VideoPlayer({
     const store = useWatchHistoryStore;
 
     // Snapshot meta của ĐÚNG tập này. Không đọc metaRef.current trong cleanup,
-    // vì lúc đó ref đã bị gán sang tập mới -> lưu nhầm thời gian tập cũ cho tập mới.
+    // vì lúc đó ref đã bị gán sang tập mới.
     const meta = { ...metaRef.current };
 
     setStatus("loading");
@@ -93,11 +101,11 @@ export function VideoPlayer({
     };
 
     // ---------- Resume ----------
+    // Mỗi phim chỉ nhớ tiến độ của TẬP ĐANG XEM (current). Tập xong có progress = 0 nên không seek.
     const seekToSaved = () => {
       if (!active) return;
-      const saved =
-        store.getState().movies[meta.movieId]?.episodes[meta.episodeId];
-      if (!saved || saved.completed) return;
+      const saved = store.getState().movies[meta.movieId]?.current;
+      if (!saved || saved.episodeId !== meta.episodeId) return;
       if (saved.progress < MIN_RESUME_SECONDS) return;
       if (video.duration - saved.progress <= MIN_REMAINING_SECONDS) return;
       video.currentTime = saved.progress;
@@ -111,7 +119,6 @@ export function VideoPlayer({
         if (store.persist.hasHydrated()) {
           seekToSaved();
         } else {
-          // Chưa hydrate xong -> đợi rồi mới seek
           const unsub = store.persist.onFinishHydration(() => {
             unsub();
             seekToSaved();
@@ -121,33 +128,59 @@ export function VideoPlayer({
       { once: true, signal },
     );
 
-    // ---------- Save ----------
+    // ---------- Save (CHỈ localStorage, không gọi mạng) ----------
+    // timeupdate: tối đa 15s/lần. pause / ended / ẩn tab / đóng tab / đổi tập: lưu ngay.
     let lastSavedAt = 0;
     const save = (force = false) => {
-      // Chưa hydrate thì không ghi, tránh đè dữ liệu cũ trong localStorage
       if (!store.persist.hasHydrated()) return;
       if (!video.duration || !Number.isFinite(video.duration)) return;
 
       const now = Date.now();
-      if (!force && now - lastSavedAt < SAVE_INTERVAL_MS) return;
+      if (!force && now - lastSavedAt < LOCAL_SAVE_INTERVAL_MS) return;
       lastSavedAt = now;
 
-      // force = pause / ended / ẩn tab / đóng tab / đổi tập -> cho phép gửi server sớm.
-      // Còn timeupdate thường chỉ lưu local, server nhận thưa (~60s/lần).
-      store.getState().saveProgress(
-        {
-          ...meta,
-          progress: video.currentTime,
-          duration: video.duration,
-        },
-        { flush: force },
-      );
+      store.getState().saveProgress({
+        ...meta,
+        progress: video.currentTime,
+        duration: video.duration,
+      });
     };
 
+    const pushNow = (minGapMs = 0) =>
+      void store.getState().pushDirty({ minGapMs });
+
     video.addEventListener("timeupdate", () => save(), { signal });
-    video.addEventListener("pause", () => save(true), { signal });
-    // ended: currentTime ~ duration nên store sẽ đánh dấu completed = true
-    video.addEventListener("ended", () => save(true), { signal });
+
+    // pause: lưu local ngay; đẩy server sau PAUSE_PUSH_DELAY_MS nếu user KHÔNG bấm play lại.
+    let pauseTimer: ReturnType<typeof setTimeout> | null = null;
+    const cancelPauseTimer = () => {
+      if (pauseTimer) clearTimeout(pauseTimer);
+      pauseTimer = null;
+    };
+
+    video.addEventListener(
+      "pause",
+      () => {
+        save(true);
+        cancelPauseTimer();
+        pauseTimer = setTimeout(() => {
+          pauseTimer = null;
+          pushNow(PAUSE_PUSH_MIN_GAP_MS);
+        }, PAUSE_PUSH_DELAY_MS);
+      },
+      { signal },
+    );
+    video.addEventListener("play", cancelPauseTimer, { signal });
+    // ended: currentTime ~ duration nên store sẽ thêm tập vào completedEpisodeIds
+    video.addEventListener(
+      "ended",
+      () => {
+        cancelPauseTimer();
+        save(true);
+        pushNow();
+      },
+      { signal },
+    );
     document.addEventListener(
       "visibilitychange",
       () => {
@@ -157,9 +190,10 @@ export function VideoPlayer({
     );
     window.addEventListener("pagehide", () => save(true), { signal });
 
+    setLiveSaver(() => save(true));
+
     // ---------- HLS ----------
     const init = async () => {
-      // hls.js khá nặng (~500KB) -> chỉ tải khi thật sự cần phát
       const { default: Hls } = await import("hls.js");
       if (!active) return;
 
@@ -169,7 +203,7 @@ export function VideoPlayer({
           maxMaxBufferLength: 60,
           maxBufferSize: 60 * 1000 * 1000,
           maxBufferHole: 0.3,
-          backBufferLength: 30, // giải phóng bộ nhớ phần đã xem
+          backBufferLength: 30,
           startLevel: -1,
           capLevelToPlayerSize: true,
           enableWorker: true,
@@ -207,7 +241,10 @@ export function VideoPlayer({
     init();
 
     return () => {
+      cancelPauseTimer();
       save(true); // đổi tập / unmount vẫn lưu
+      pushNow(); // rời tập này: đẩy phần thay đổi (nếu có)
+      setLiveSaver(null);
       active = false;
       ac.abort();
       cleanupHls(hls);
@@ -216,8 +253,7 @@ export function VideoPlayer({
       video.removeAttribute("src");
       video.load();
     };
-    // Chỉ chạy lại khi đổi nguồn phát / bấm thử lại.
-    // Meta (tên phim, poster...) đọc qua metaRef nên không cần nằm trong deps.
+    // Chỉ chạy lại khi đổi nguồn phát / bấm thử lại. Meta đọc qua metaRef.
   }, [src, episode.slug, attempt]);
 
   return (

@@ -99,24 +99,32 @@ model Favorite {
 }
 
 model WatchHistory {
-  id          String   @id @default(cuid())
-  userId      String   @map("user_id")
-  movieId     String   @map("movie_id")
-  movieSlug   String   @map("movie_slug")
-  movieName   String   @map("movie_name")
-  posterUrl   String?  @map("poster_url")
-  thumbUrl    String?  @map("thumb_url")
-  episodeId   String   @map("episode_id")
-  serverSlug  String   @map("server_slug")
-  episodeName String   @map("episode_name")
-  progress    Int      @default(0)
-  duration    Int      @default(0)
-  completed   Boolean  @default(false)
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id        String @id @default(cuid())
+  userId    String @map("user_id")
+  movieId   String @map("movie_id")
+  movieSlug String @map("movie_slug")
+  movieName String @map("movie_name")
+  posterUrl String? @map("poster_url")
+  thumbUrl  String? @map("thumb_url")
+
+  totalEpisodes Int? @map("total_episodes")
+
+  // Tập đang xem
+  episodeId   String @map("episode_id")
+  episodeName String @map("episode_name")
+  serverSlug  String @map("server_slug")
+  progress    Int    @default(0)
+  duration    Int    @default(0)
+
+  // Các tập đã xem xong (union giữa các thiết bị)
+  completedEpisodes String[] @default([]) @map("completed_episodes")
+
+  // Client quyết định thời điểm, nên KHÔNG dùng @updatedAt
+  updatedAt DateTime @default(now()) @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, movieId, episodeId])
-  @@index([userId, updatedAt])
+  @@unique([userId, movieId])
+  @@index([userId, updatedAt(sort: Desc)])
   @@map("watch_history")
 }

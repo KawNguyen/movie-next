@@ -30,21 +30,18 @@ export const auth = betterAuth({
     updateAge: 60 * 60 * 24, // 1 day
     cookieCache: {
       enabled: true,
-      maxAge: 60 * 5, // 5 minutes
+      maxAge: 60 * 15, // 15 minutes
     },
   },
   advanced: {
     cookiePrefix: "better-auth",
-    crossSubDomainCookies: {
-      enabled: false, // Disable để tránh domain issues
-    },
+    // crossSubDomainCookies: {
+    //   enabled: false,  
+    // },
     cookies: {
-      sessionToken: {
-        name: "session_token", // Match với cookie names trong browser
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: process.env.NODE_ENV === "production" ? "lax" : "lax", // Use lax instead of none
-        // Don't set domain để let browser handle it
+      session_token: {
+        name: "session_token",
+        attributes: { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax" },
       },
     },
   },

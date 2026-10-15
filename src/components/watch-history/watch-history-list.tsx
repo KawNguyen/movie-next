@@ -13,15 +13,19 @@ import {
 } from "@/stores/watch-history-store";
 import { getEpisodeUrlParam } from "@/lib/episode-params";
 
-function getWatchUrl({ movie, episode, needsNextEpisode }: ContinueWatchingItem) {
-  // Tập đã xem xong -> không kèm `tap`, để trang phim tự chọn tập kế tiếp
-  if (needsNextEpisode) {
-    return `/phim/${movie.movieSlug}?${new URLSearchParams({
-      server: episode.serverSlug,
-    })}`;
-  }
+function getWatchUrl({
+  movie,
+  episode,
+  needsNextEpisode,
+  nextEpisodeId,
+}: ContinueWatchingItem) {
+  // Xem xong tập hiện tại và còn tập kế tiếp (không vượt quá totalEpisodes) -> mở tập kế tiếp
+  // Còn lại (đang xem dở, hoặc đã xem hết tập cuối) -> mở lại tập hiện tại
+  const targetId =
+    needsNextEpisode && nextEpisodeId ? nextEpisodeId : episode.episodeId;
+
   return `/phim/${movie.movieSlug}?${new URLSearchParams({
-    tap: getEpisodeUrlParam(episode.episodeId),
+    tap: getEpisodeUrlParam(targetId),
     server: episode.serverSlug,
   })}`;
 }
@@ -89,14 +93,29 @@ export function WatchHistoryList() {
 
       <div className="grid gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {items.map((item) => {
-          const { movie, episode, needsNextEpisode } = item;
+          const { movie, episode, needsNextEpisode, nextEpisodeId, finishedAll } =
+            item;
           const href = getWatchUrl(item);
           const percent = needsNextEpisode
             ? 100
-            : Math.min(
-                100,
-                Math.round((episode.progress / episode.duration) * 100),
-              );
+            : episode.duration > 0
+              ? Math.min(
+                  100,
+                  Math.round((episode.progress / episode.duration) * 100),
+                )
+              : 0;
+
+          const statusLabel = finishedAll
+            ? "Đã xem hết phim"
+            : needsNextEpisode
+              ? "Đã xem xong"
+              : formatRemaining(episode.progress, episode.duration);
+
+          const actionLabel = finishedAll
+            ? "Xem lại"
+            : needsNextEpisode && nextEpisodeId
+              ? "Xem tập tiếp theo"
+              : "Xem tiếp";
 
           return (
             <article key={movie.movieId} className="group relative">
@@ -123,11 +142,9 @@ export function WatchHistoryList() {
                     {episode.episodeName}
                   </span>
 
-                  {/* thời gian còn lại */}
+                  {/* trạng thái / thời gian còn lại */}
                   <span className="absolute bottom-3 right-2.5 text-xs font-medium text-white/90">
-                    {needsNextEpisode
-                      ? "Đã xem xong"
-                      : formatRemaining(episode.progress, episode.duration)}
+                    {statusLabel}
                   </span>
 
                   <Progress
@@ -142,7 +159,10 @@ export function WatchHistoryList() {
                     {movie.movieName}
                   </h2>
                   <p className="mt-0.5 text-sm text-muted-foreground">
-                    {needsNextEpisode ? "Xem tập tiếp theo" : "Xem tiếp"}
+                    {actionLabel}
+                    {movie.totalEpisodes
+                      ? ` · ${movie.completedEpisodeIds.length}/${movie.totalEpisodes} tập`
+                      : ""}
                   </p>
                 </div>
               </Link>

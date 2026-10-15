@@ -61,8 +61,8 @@ export function ResumePrompt({
 
   if (!hydrated || dismissed || !movie) return null;
 
-  const last = movie.episodes[movie.lastEpisodeId];
-  if (!last) return null;
+  // Mỗi phim chỉ nhớ tập đang xem (current) + danh sách tập đã xong
+  const last = movie.current;
 
   const server =
     servers.find((s) => s.serverSlug === last.serverSlug) ?? servers[0];
@@ -71,14 +71,19 @@ export function ResumePrompt({
   // Phim lẻ (chỉ 1 tập, vd "Full"): player tự mở và tự tua, không cần hỏi
   if (server.episodes.length <= 1) return null;
 
+  // Tập đang xem đã xong (progress về 0 và nằm trong danh sách hoàn thành)
+  const finished =
+    last.progress === 0 && movie.completedEpisodeIds.includes(last.episodeId);
+
   // Xác định tập cần gợi ý
   let target: { slug: string; name: string } | undefined;
-  let finished = false;
 
-  if (last.completed) {
-    finished = true;
+  if (finished) {
     const idx = server.episodes.findIndex((e) => e.slug === last.episodeId);
-    target = idx >= 0 ? server.episodes[idx + 1] : undefined;
+    const nextIdx = idx + 1;
+    // Không gợi ý vượt quá tổng số tập
+    const withinTotal = !movie.totalEpisodes || nextIdx < movie.totalEpisodes;
+    target = idx >= 0 && withinTotal ? server.episodes[nextIdx] : undefined;
   } else {
     target = server.episodes.find((e) => e.slug === last.episodeId);
   }
@@ -92,10 +97,10 @@ export function ResumePrompt({
     (!currentServerSlug || currentServerSlug === server.serverSlug);
   if (isPlayingTarget) return null;
 
-  const percent = Math.min(
-    100,
-    Math.round((last.progress / last.duration) * 100),
-  );
+  const percent =
+    last.duration > 0
+      ? Math.min(100, Math.round((last.progress / last.duration) * 100))
+      : 0;
 
   const handleResume = () => {
     onResume(target!.slug, server.serverSlug);

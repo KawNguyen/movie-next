@@ -68,14 +68,21 @@ function EpisodeListBase({
 
   const server = episodes[activeServer];
 
-  // Tiến độ các tập của phim này (reference chỉ đổi khi phim này có thay đổi)
-  const watchedEpisodes = useWatchHistoryStore(
-    (s) => s.movies[movie._id]?.episodes,
-  );
+  // Lịch sử xem của phim này: { current, completedEpisodeIds, ... }
+  // (reference chỉ đổi khi chính phim này có thay đổi)
+  const watched = useWatchHistoryStore((s) => s.movies[movie._id]);
 
   // Chỉ hiện tick sau khi mount để tránh hydration mismatch với SSR
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+
+  const completedIds = useMemo(
+    () => new Set(mounted ? (watched?.completedEpisodeIds ?? []) : []),
+    [mounted, watched?.completedEpisodeIds],
+  );
+
+  // Chỉ tập đang xem (current) mới có tiến độ dở
+  const current = mounted ? watched?.current : undefined;
 
   // Chọn server mới thì chuyển sang tập 1.
   const handleServerChange = useCallback(
@@ -128,15 +135,17 @@ function EpisodeListBase({
         const tap = i + 1;
         const selected = tap === activeTap;
 
-        const record = mounted ? watchedEpisodes?.[ep.slug] : undefined;
-        const done = !!record?.completed;
+        const done = completedIds.has(ep.slug);
         const percent =
-          record && !record.completed && record.duration > 0
+          !done &&
+          current &&
+          current.episodeId === ep.slug &&
+          current.duration > 0
             ? Math.min(
                 100,
                 Math.max(
                   0,
-                  Math.round((record.progress / record.duration) * 100),
+                  Math.round((current.progress / current.duration) * 100),
                 ),
               )
             : 0;
@@ -193,10 +202,11 @@ function EpisodeListBase({
           </button>
         );
       }),
-    [server, activeTap, pending, mounted, watchedEpisodes],
+    [server, activeTap, pending, completedIds, current],
   );
 
   const completed = movie.status === "completed";
+  const watchedCount = completedIds.size;
 
   const currentServerLabel = episodes[activeServer]?.server_name ?? "";
 
@@ -216,6 +226,7 @@ function EpisodeListBase({
 
         <p className="text-sm text-muted-foreground">
           {movie.episode_total} tập
+          {watchedCount > 0 && ` · Đã xem ${watchedCount}`}
         </p>
 
         {episodes.length > 1 && (

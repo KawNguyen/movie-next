@@ -3,6 +3,7 @@
 import {
   Suspense,
   useCallback,
+  useEffect,
   useMemo,
   useState,
   useTransition,
@@ -19,10 +20,27 @@ import {
   resolveTap,
 } from "@/lib/episode-params";
 import { getServerSlug } from "@/lib/movie-url";
+import { useWatchHistoryStore } from "@/stores/watch-history-store";
 import { MAIN_GRID } from "./movie-detail-layout";
 
 type Movie = MovieDetailResponse["movie"];
 type Episodes = MovieDetailResponse["episodes"];
+
+/**
+ * Tổng số tập: ưu tiên `movie.episode_total` ("80", "80 Tập", "24/80" -> 80),
+ * không đọc được (vd "Đang cập nhật", "?") thì dùng số tập hiện có của server đang xem.
+ */
+function resolveTotalEpisodes(
+  episodeTotal: unknown,
+  availableCount: number,
+): number | null {
+  const nums = String(episodeTotal ?? "")
+    .match(/\d+/g)
+    ?.map(Number)
+    .filter((n) => n > 0);
+  if (nums?.length) return Math.max(...nums);
+  return availableCount > 0 ? availableCount : null;
+}
 
 function WatchSectionContent({
   movie,
@@ -101,6 +119,22 @@ function WatchSectionContent({
 
   const server = episodes[serverIndex];
 
+  const totalEpisodes = useMemo(
+    () =>
+      resolveTotalEpisodes(
+        movie.episode_total,
+        server?.server_data?.length ?? 0,
+      ),
+    [movie.episode_total, server],
+  );
+
+  // Điền tổng số tập cho lịch sử đã có (dữ liệu cũ đang null), không cần chờ xem video
+  const hydrated = useWatchHistoryStore((s) => s.hydrated);
+  const setTotalEpisodes = useWatchHistoryStore((s) => s.setTotalEpisodes);
+  useEffect(() => {
+    if (hydrated && totalEpisodes) setTotalEpisodes(movie._id, totalEpisodes);
+  }, [hydrated, totalEpisodes, movie._id, setTotalEpisodes]);
+
   return (
     <div className="space-y-4">
       {showResumePrompt && (
@@ -123,6 +157,7 @@ function WatchSectionContent({
             movieName={movie.name}
             posterUrl={movie.poster_url}
             thumbUrl={movie.thumb_url}
+            totalEpisodes={totalEpisodes}
           />
         )}
         <div className="relative min-w-0">

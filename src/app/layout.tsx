@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/provider/theme-provider";
 import { AuthProvider } from "@/components/provider/auth-provider";
 import { Toaster } from "sonner";
 import "./globals.css";
+import { WatchHistorySync } from "@/components/watch-history-sync";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,8 +42,9 @@ export default function RootLayout({
           defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
-        >
+        > 
           <AuthProvider>{children}</AuthProvider>
+          <WatchHistorySync />
           <Toaster richColors position="top-right" />
         </ThemeProvider>
       </body>

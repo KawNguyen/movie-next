@@ -1,27 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
 
 export default async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
-
-  // Check multiple possible cookie names for better-auth (including production secure cookies)
-  const sessionTokens = {
-    secureToken: req.cookies.get("__Secure-better-auth.session_token")?.value,
-    secureData: req.cookies.get("__Secure-better-auth.session_data")?.value,
-    token: req.cookies.get("better-auth.session_token")?.value,
-    tokenAlt: req.cookies.get("better-auth.session-token")?.value,
-    simple: req.cookies.get("session-token")?.value,
-    legacy: req.cookies.get("better_auth_session")?.value,
-  };
-
-  const sessionToken =
-    sessionTokens.secureToken ||
-    sessionTokens.secureData ||
-    sessionTokens.token ||
-    sessionTokens.tokenAlt ||
-    sessionTokens.simple ||
-    sessionTokens.legacy;
-
-  const isAuthenticated = !!sessionToken;
 
   const isProtectedPage =
     pathname.startsWith("/profile") ||
@@ -29,6 +10,8 @@ export default async function proxy(req: NextRequest) {
     pathname.startsWith("/phim-yeu-thich");
 
   const isAuthPage = ["/login"].includes(pathname);
+  const session = await auth.api.getSession({ headers: req.headers });
+  const isAuthenticated = !!session?.user;
 
   // Redirect to login if trying to access protected pages without auth
   if (isProtectedPage && !isAuthenticated) {
@@ -37,7 +20,6 @@ export default async function proxy(req: NextRequest) {
       "redirect",
       `${pathname}${req.nextUrl.search}`,
     );
-    loginUrl.searchParams.set("debug", "no-session");
 
     return NextResponse.redirect(loginUrl);
   }
