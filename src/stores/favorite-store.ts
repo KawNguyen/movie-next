@@ -14,13 +14,25 @@ export interface FavoriteMovie {
   createdAt: string;
 }
 
-interface FavoriteStore {
+interface FavoriteState {
   favorites: FavoriteMovie[];
+  /** tài khoản đã đồng bộ lần cuối trên trình duyệt này (tránh trộn yêu thích của 2 tài khoản) */
+  syncUserId: string | null;
+  /** lần cuối kéo từ server (để không GET lại liên tục) */
+  pulledAt: string;
+}
+
+interface FavoriteStore extends FavoriteState {
   addFavorite: (movie: Omit<FavoriteMovie, "id" | "createdAt">) => void;
   removeFavorite: (movieId: string) => void;
-  syncFromServer: () => Promise<void>;
+  /** Gọi 1 lần khi đăng nhập / mở trang. Truyền userId để không trộn dữ liệu giữa các tài khoản. */
+  syncFromServer: (userId?: string) => Promise<void>;
   isFavorite: (movieId: string) => boolean;
 }
+
+const MAX_FAVORITES = 500;
+const BULK_CHUNK = 100;
+const PULL_TTL_MS = 3 * 60 * 60 * 1000; // 3 giờ
 
 const requestQueues = new Map<string, Promise<void>>();
 
@@ -43,12 +55,14 @@ export const useFavoriteStore = create<FavoriteStore>()(
   persist(
     (set, get) => ({
       favorites: [],
+      syncUserId: null,
+      pulledAt: "",
+
       addFavorite: (movie) => {
         set((state) => {
-          if (state.favorites.some((favorite) => favorite.movieId === movie.movieId)) {
+          if (state.favorites.some((f) => f.movieId === movie.movieId)) {
             return state;
           }
-
           return {
             favorites: [
               {
@@ -69,7 +83,7 @@ export const useFavoriteStore = create<FavoriteStore>()(
           if (response.status === 409) {
             set((state) => ({
               favorites: state.favorites.filter(
-                (favorite) => favorite.movieId !== movie.movieId,
+                (f) => f.movieId !== movie.movieId,
               ),
             }));
             toast.info("Đã đạt giới hạn danh sách yêu thích");
@@ -80,11 +94,10 @@ export const useFavoriteStore = create<FavoriteStore>()(
           }
         }).catch((error) => console.error("Favorite sync failed:", error));
       },
+
       removeFavorite: (movieId) => {
         set((state) => ({
-          favorites: state.favorites.filter(
-            (favorite) => favorite.movieId !== movieId,
-          ),
+          favorites: state.favorites.filter((f) => f.movieId !== movieId),
         }));
         enqueue(movieId, async () => {
           const response = await fetch("/api/favorites", {
@@ -97,41 +110,80 @@ export const useFavoriteStore = create<FavoriteStore>()(
           }
         }).catch((error) => console.error("Favorite sync failed:", error));
       },
-      syncFromServer: async () => {
+
+      syncFromServer: async (userId) => {
         try {
-          const response = await fetch("/api/favorites");
+          const uid = userId ?? null;
+
+          // Đổi tài khoản trên cùng trình duyệt -> bỏ yêu thích local của người trước
+          const { syncUserId } = get();
+          if (syncUserId && uid && syncUserId !== uid) {
+            set({ favorites: [], syncUserId: null, pulledAt: "" });
+          }
+
+          // Vừa đồng bộ cách đây chưa lâu -> khỏi GET lại (mỗi lần GET là 1 lần đánh thức Neon)
+          const { pulledAt } = get();
+          if (
+            get().syncUserId === uid &&
+            pulledAt &&
+            Date.now() - Date.parse(pulledAt) < PULL_TTL_MS
+          ) {
+            return;
+          }
+
+          const response = await fetch("/api/favorites", { cache: "no-store" });
           if (!response.ok) return;
           const result = await response.json();
           if (!result.authenticated) return;
+
+          const startedAt = new Date().toISOString();
           const serverFavorites = result.data as FavoriteMovie[];
           const localFavorites = get().favorites;
-          set({
-            favorites: [
-              ...localFavorites,
-              ...serverFavorites.filter(
-                (server) =>
-                  !localFavorites.some(
-                    (local) => local.movieId === server.movieId,
-                  ),
-              ),
-            ],
-          });
-          await Promise.all(
-            localFavorites.map((favorite) =>
-              fetch("/api/favorites", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(favorite),
+          const serverIds = new Set(serverFavorites.map((f) => f.movieId));
+          const localIds = new Set(localFavorites.map((f) => f.movieId));
+
+          // 1) kéo: gộp server vào local (mới nhất lên đầu)
+          const merged = [
+            ...localFavorites,
+            ...serverFavorites.filter((s) => !localIds.has(s.movieId)),
+          ]
+            .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+            .slice(0, MAX_FAVORITES);
+          set({ favorites: merged, syncUserId: uid });
+
+          // 2) đẩy: chỉ những phim local mà server chưa có, gộp thành vài request bulk
+          const missing = localFavorites
+            .filter((f) => !serverIds.has(f.movieId))
+            .map(({ id: _id, ...rest }) => rest);
+
+          for (let i = 0; i < missing.length; i += BULK_CHUNK) {
+            const res = await fetch("/api/favorites", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                action: "bulk",
+                items: missing.slice(i, i + BULK_CHUNK),
               }),
-            ),
-          );
+            });
+            if (!res.ok) return; // lần sau thử lại
+          }
+
+          set({ pulledAt: startedAt });
         } catch (error) {
           console.error("Favorite hydration failed:", error);
         }
       },
+
       isFavorite: (movieId) =>
-        get().favorites.some((favorite) => favorite.movieId === movieId),
+        get().favorites.some((f) => f.movieId === movieId),
     }),
-    { name: "movie-next-favorites" },
+    {
+      name: "movie-next-favorites",
+      partialize: (state): FavoriteState => ({
+        favorites: state.favorites,
+        syncUserId: state.syncUserId,
+        pulledAt: state.pulledAt,
+      }),
+    },
   ),
 );

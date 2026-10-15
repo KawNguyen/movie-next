@@ -4,13 +4,23 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
 
+const MAX_FAVORITES = 500;
+const MAX_BULK_ITEMS = 100;
+
 const movieId = z.string().trim().min(1).max(200);
+
 const addFavoriteSchema = z.object({
   movieId,
   movieSlug: z.string().trim().min(1).max(200),
   movieName: z.string().trim().min(1).max(300),
   posterUrl: z.string().max(2000).nullable().optional(),
   movieType: z.string().max(50).nullable().optional(),
+  createdAt: z.string().datetime({ offset: true }).optional(),
+});
+
+const bulkSchema = z.object({
+  action: z.literal("bulk"),
+  items: z.array(addFavoriteSchema).min(1).max(MAX_BULK_ITEMS),
 });
 
 const removeFavoriteSchema = z.object({
@@ -45,6 +55,48 @@ function validationError(error: z.ZodError) {
   );
 }
 
+/**
+ * Thêm nhiều phim yêu thích bằng đúng 3 câu SQL (không phụ thuộc số lượng item):
+ * lấy phim đã có -> đếm -> createMany(skipDuplicates).
+ * Phim đã tồn tại thì bỏ qua; quá giới hạn thì từ chối phần dư (giữ các item đứng trước, tức mới nhất).
+ */
+async function addMany(
+  userId: string,
+  items: z.infer<typeof addFavoriteSchema>[],
+) {
+  const byId = new Map(items.map((i) => [i.movieId, i]));
+  const unique = [...byId.values()];
+
+  const existing = await prisma.favorite.findMany({
+    where: { userId, movieId: { in: unique.map((i) => i.movieId) } },
+    select: { movieId: true },
+  });
+  const have = new Set(existing.map((e) => e.movieId));
+  const fresh = unique.filter((i) => !have.has(i.movieId));
+  if (fresh.length === 0) return { added: 0, rejected: 0 };
+
+  const total = await prisma.favorite.count({ where: { userId } });
+  const room = Math.max(0, MAX_FAVORITES - total);
+  const toAdd = fresh.slice(0, room);
+
+  if (toAdd.length > 0) {
+    await prisma.favorite.createMany({
+      data: toAdd.map((i) => ({
+        userId,
+        movieId: i.movieId,
+        movieSlug: i.movieSlug,
+        movieName: i.movieName,
+        posterUrl: i.posterUrl ?? null,
+        movieType: i.movieType ?? null,
+        createdAt: i.createdAt ? new Date(i.createdAt) : undefined,
+      })),
+      skipDuplicates: true,
+    });
+  }
+
+  return { added: toAdd.length, rejected: fresh.length - toAdd.length };
+}
+
 export async function GET() {
   const userId = await getUserId();
   if (!userId) return jsonBody({ data: [], authenticated: false });
@@ -52,7 +104,16 @@ export async function GET() {
   const favorites = await prisma.favorite.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
-    take: 500,
+    take: MAX_FAVORITES,
+    select: {
+      id: true,
+      movieId: true,
+      movieSlug: true,
+      movieName: true,
+      posterUrl: true,
+      movieType: true,
+      createdAt: true,
+    },
   });
   return jsonBody({ data: favorites, authenticated: true });
 }
@@ -68,12 +129,10 @@ export async function POST(request: NextRequest) {
     return jsonBody({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  if (
-    typeof body === "object" &&
-    body !== null &&
-    "action" in body &&
-    body.action === "remove"
-  ) {
+  const action = (body as { action?: unknown } | null)?.action;
+
+  /* ----- remove ----- */
+  if (action === "remove") {
     const parsed = removeFavoriteSchema.safeParse(body);
     if (!parsed.success) return validationError(parsed.error);
 
@@ -83,47 +142,22 @@ export async function POST(request: NextRequest) {
     return jsonBody({ success: true });
   }
 
+  /* ----- bulk (đồng bộ lần đầu / sau đăng nhập) ----- */
+  if (action === "bulk") {
+    const parsed = bulkSchema.safeParse(body);
+    if (!parsed.success) return validationError(parsed.error);
+
+    const { added, rejected } = await addMany(userId, parsed.data.items);
+    return jsonBody({ success: true, added, rejected });
+  }
+
+  /* ----- add 1 phim ----- */
   const parsed = addFavoriteSchema.safeParse(body);
   if (!parsed.success) return validationError(parsed.error);
 
-  const existing = await prisma.favorite.findUnique({
-    where: {
-      userId_movieId: {
-        userId,
-        movieId: parsed.data.movieId,
-      },
-    },
-  });
-
-  if (!existing) {
-    const count = await prisma.favorite.count({ where: { userId } });
-    if (count >= 500) {
-      return jsonBody({ error: "Favorites limit reached" }, { status: 409 });
-    }
+  const { rejected } = await addMany(userId, [parsed.data]);
+  if (rejected > 0) {
+    return jsonBody({ error: "Favorites limit reached" }, { status: 409 });
   }
-
-  const favorite = await prisma.favorite.upsert({
-    where: {
-      userId_movieId: {
-        userId,
-        movieId: parsed.data.movieId,
-      },
-    },
-    update: {
-      movieSlug: parsed.data.movieSlug,
-      movieName: parsed.data.movieName,
-      posterUrl: parsed.data.posterUrl ?? null,
-      movieType: parsed.data.movieType ?? null,
-    },
-    create: {
-      userId,
-      movieId: parsed.data.movieId,
-      movieSlug: parsed.data.movieSlug,
-      movieName: parsed.data.movieName,
-      posterUrl: parsed.data.posterUrl ?? null,
-      movieType: parsed.data.movieType ?? null,
-    },
-  });
-
-  return jsonBody({ data: favorite });
+  return jsonBody({ success: true });
 }

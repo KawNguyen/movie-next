@@ -26,8 +26,8 @@ interface VideoPlayerProps {
 type Status = "loading" | "ready" | "error";
 
 const LOCAL_SAVE_INTERVAL_MS = 15_000; // lưu localStorage tối đa mỗi 15s khi đang xem
-const PAUSE_PUSH_DELAY_MS = 3_000;
-const PAUSE_PUSH_MIN_GAP_MS = 10_000;
+const PAUSE_PUSH_DELAY_MS = 5_000; // pause quá 30s mới đẩy (đi vắng thật), tránh đánh thức DB vô ích
+const PAUSE_PUSH_MIN_GAP_MS = 5 * 60_000; // 2 lần đẩy do pause cách nhau tối thiểu 5 phút
 const MIN_RESUME_SECONDS = 30;
 const MIN_REMAINING_SECONDS = 90;
 

@@ -1,10 +1,10 @@
-import Hls from "hls.js";
+import Hls, { HlsConfig } from "hls.js";
 
 /**
  * Cấu hình tối ưu cho HLS.js để giảm thiểu lỗi buffer
  * Dựa trên best practices từ các streaming platform lớn
  */
-export const getOptimizedHlsConfig = (): Partial<Hls.Config> => {
+export const getOptimizedHlsConfig = (): Partial<HlsConfig> => {
   return {
     // Buffer configuration - giảm thiểu memory usage
     maxBufferLength: 10, // 10 seconds forward buffer (giảm từ 30s)

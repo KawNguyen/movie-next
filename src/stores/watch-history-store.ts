@@ -129,7 +129,7 @@ const COMPLETE_RATIO = 0.95;
 const MAX_MOVIES = 50;
 const MAX_COMPLETED = 2000;
 
-const PULL_TTL_MS = 30 * 60 * 1000;
+const PULL_TTL_MS = 3 * 60 * 60 * 1000; // 3 giờ: mỗi lần GET là 1 lần đánh thức Neon (>= 5 phút compute)
 const PUSH_CHUNK = 30; // phim có thể có hàng trăm tập hoàn thành -> chunk nhỏ cho keepalive (64KB)
 
 let pushing = false;
