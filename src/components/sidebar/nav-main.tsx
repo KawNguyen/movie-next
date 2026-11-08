@@ -56,18 +56,12 @@ export function NavMain({
           return item.items?.length ? (
             <Collapsible key={item.title} asChild defaultOpen={isItemActive}>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={item.title}>
-                  <div>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton tooltip={item.title} className="group">
                     <item.icon />
                     <span>{item.title}</span>
-                  </div>
-                </SidebarMenuButton>
-
-                <CollapsibleTrigger asChild>
-                  <SidebarMenuAction className="data-[state=open]:rotate-90">
-                    <ChevronRight />
-                    <span className="sr-only">Toggle</span>
-                  </SidebarMenuAction>
+                    <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]:rotate-90" />
+                  </SidebarMenuButton>
                 </CollapsibleTrigger>
 
                 <CollapsibleContent>
