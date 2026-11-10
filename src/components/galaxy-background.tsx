@@ -154,7 +154,8 @@ export function GalaxyBackground({
         const arm = i % ARMS;
         return {
           t,
-          angle: (arm / ARMS) * Math.PI * 2 + t * ARM_WIND + 0.12 + rand(-0.1, 0.1),
+          angle:
+            (arm / ARMS) * Math.PI * 2 + t * ARM_WIND + 0.12 + rand(-0.1, 0.1),
           size: rand(0.6, 1.7),
           alpha: rand(0.4, 0.9),
           phase: Math.random() * Math.PI * 2,
@@ -168,7 +169,8 @@ export function GalaxyBackground({
         const arm = i % ARMS;
         return {
           t,
-          angle: (arm / ARMS) * Math.PI * 2 + t * ARM_WIND + 0.2 + rand(-0.12, 0.12),
+          angle:
+            (arm / ARMS) * Math.PI * 2 + t * ARM_WIND + 0.2 + rand(-0.12, 0.12),
           size: rand(3, 9),
           alpha: rand(0.05, 0.16),
           phase: 0,

@@ -29,10 +29,7 @@ export function FavoritesList() {
 
       <div className="space-y-4 md:space-y-3">
         {favorites.map((favorite) => (
-          <FavoriteMovieCard
-            key={favorite.movieId}
-            favorite={favorite}
-          />
+          <FavoriteMovieCard key={favorite.movieId} favorite={favorite} />
         ))}
       </div>
     </div>

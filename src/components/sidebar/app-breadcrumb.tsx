@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/breadcrumb";
 import { usePathname } from "next/navigation";
 import { Home } from "lucide-react";
-import { useMovieName } from "@/hooks/use-movie-name";
 
 type NavItem = {
   title: string;
@@ -103,35 +102,11 @@ export default function AppBreadcrumb() {
 
   const breadcrumbs = useMemo(() => getBreadcrumbs(pathname), [pathname]);
 
-  const movieSlug = pathname.startsWith("/phim/")
-    ? (pathname.split("/").filter(Boolean).pop() ?? null)
-    : null;
-
-  const movieName = useMovieName(movieSlug);
-
-  const displayBreadcrumbs = useMemo(() => {
-    if (!movieName || !movieSlug) {
-      return breadcrumbs;
-    }
-
-    return breadcrumbs.map((breadcrumb) => {
-      if (breadcrumb.url === `/phim/${movieSlug}`) {
-        return {
-          ...breadcrumb,
-          title: movieName,
-        };
-      }
-
-      return breadcrumb;
-    });
-  }, [breadcrumbs, movieName, movieSlug]);
-
   return (
     <Breadcrumb className="hidden md:block">
       <BreadcrumbList>
-        {displayBreadcrumbs.map((crumb, idx) => {
-          const isLast = idx === displayBreadcrumbs.length - 1;
-
+        {breadcrumbs.map((crumb, idx) => {
+          const isLast = idx === breadcrumbs.length - 1;
           const slug = crumb.url.split("/").filter(Boolean).pop();
 
           return (
@@ -141,7 +116,8 @@ export default function AppBreadcrumb() {
                   <BreadcrumbPage className="font-bold">
                     {crumb.url === "/" ? (
                       <div className="flex items-center gap-2">
-                        <Home className="size-4" /> Trang chủ
+                        <Home className="size-4" />
+                        Trang chủ
                       </div>
                     ) : (
                       crumb.title

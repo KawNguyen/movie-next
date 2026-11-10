@@ -95,7 +95,8 @@ function toRow(input: z.infer<typeof itemSchema>, now: Date): Row | null {
   const completedEpisodes = [...new Set(input.completedEpisodes)];
 
   // Chưa xem tới ngưỡng và cũng chưa có tập nào hoàn thành -> bỏ qua
-  if (progress < MIN_SAVE_SECONDS && completedEpisodes.length === 0) return null;
+  if (progress < MIN_SAVE_SECONDS && completedEpisodes.length === 0)
+    return null;
 
   const requested = input.updatedAt ? new Date(input.updatedAt) : now;
   const updatedAt =

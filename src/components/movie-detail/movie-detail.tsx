@@ -25,7 +25,6 @@ export default function MovieDetail({ slug, initialData }: MovieDetailProps) {
   );
 
   console.log(movieData);
-  
 
   // Có dữ liệu SSR thì không cần hiện skeleton
   const [loading, setLoading] = useState(!isValid(initialData));

@@ -4,7 +4,12 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, Sparkles, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
@@ -185,8 +190,7 @@ export function GuidedTour() {
     });
 
     // Target nằm ở cột trái (sidebar) thì ưu tiên đặt thẻ bên phải
-    const targetInLeftColumn =
-      targetRect.left + targetRect.width / 2 < vw / 3;
+    const targetInLeftColumn = targetRect.left + targetRect.width / 2 < vw / 3;
 
     let pos: { top: number; left: number } | null = null;
 

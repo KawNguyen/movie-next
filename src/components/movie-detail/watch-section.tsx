@@ -79,7 +79,8 @@ function WatchSectionContent({
       params.set(
         "tap",
         getEpisodeUrlParam(
-          episodes[nextServer].server_data[nextTap - 1]?.slug ?? String(nextTap),
+          episodes[nextServer].server_data[nextTap - 1]?.slug ??
+            String(nextTap),
         ),
       );
       startTransition(() => {
@@ -142,7 +143,9 @@ function WatchSectionContent({
           movieId={movie._id}
           servers={resumeServers}
           currentEpisodeId={episode?.slug}
-          currentServerSlug={server ? getServerSlug(server.server_name) : undefined}
+          currentServerSlug={
+            server ? getServerSlug(server.server_name) : undefined
+          }
           onResume={handleResume}
         />
       )}

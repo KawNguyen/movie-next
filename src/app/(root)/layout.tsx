@@ -1,10 +1,9 @@
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
 import { FloatingSidebarButton } from "@/components/sidebar/floating-sidebar-button";
 import { GuidedTour } from "@/components/guided-tour";
-import Header from "@/components/sidebar/header";
-
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { ReactNode } from "react";
+import HeaderWrapper from "@/components/sidebar/header-wrapper";
 
 const Layout = ({ children }: { children: ReactNode }) => {
   return (
@@ -18,8 +17,8 @@ const Layout = ({ children }: { children: ReactNode }) => {
     >
       <AppSidebar variant="inset" />
       <SidebarInset className="border">
-        <Header />
-        <div className="flex flex-1 flex-col gap-4">{children}</div>
+        <HeaderWrapper />
+        <div className="flex flex-1 flex-col">{children}</div>
       </SidebarInset>
       <FloatingSidebarButton />
       <GuidedTour />

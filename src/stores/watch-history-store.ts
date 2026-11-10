@@ -288,9 +288,10 @@ export const useWatchHistoryStore = create<WatchHistoryStore>()(
 
           let completedEpisodeIds = old?.completedEpisodeIds ?? [];
           if (completed && !completedEpisodeIds.includes(input.episodeId)) {
-            completedEpisodeIds = [...completedEpisodeIds, input.episodeId].slice(
-              -MAX_COMPLETED,
-            );
+            completedEpisodeIds = [
+              ...completedEpisodeIds,
+              input.episodeId,
+            ].slice(-MAX_COMPLETED);
           }
 
           const movie: MovieWatchState = {
@@ -367,7 +368,10 @@ export const useWatchHistoryStore = create<WatchHistoryStore>()(
           const movie = state.movies[movieId];
           if (!movie || movie.totalEpisodes === total) return state;
           return {
-            movies: { ...state.movies, [movieId]: { ...movie, totalEpisodes: total } },
+            movies: {
+              ...state.movies,
+              [movieId]: { ...movie, totalEpisodes: total },
+            },
           };
         });
       },
@@ -573,7 +577,9 @@ export const useWatchHistoryStore = create<WatchHistoryStore>()(
             const eps = Object.values(m.episodes ?? {});
             const cur =
               m.episodes?.[m.lastEpisodeId] ??
-              [...eps].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
+              [...eps].sort((a, b) =>
+                b.updatedAt.localeCompare(a.updatedAt),
+              )[0];
             if (!cur) continue;
 
             movies[m.movieId] = {
@@ -709,7 +715,9 @@ export function selectMovieProgress(movie: MovieWatchState): {
     watched,
     total,
     percent:
-      total && total > 0 ? Math.min(100, Math.round((watched / total) * 100)) : null,
+      total && total > 0
+        ? Math.min(100, Math.round((watched / total) * 100))
+        : null,
   };
 }
 

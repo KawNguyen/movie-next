@@ -41,7 +41,7 @@ export default function RootLayout({
           defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
-        > 
+        >
           <AuthProvider>{children}</AuthProvider>
           <Toaster richColors position="top-right" />
         </ThemeProvider>

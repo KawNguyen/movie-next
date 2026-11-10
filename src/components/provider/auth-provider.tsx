@@ -23,7 +23,10 @@ const HIDDEN_MIN_GAP_MS = 10 * 60 * 1000;
 
 /** Chờ store persist nạp xong từ localStorage (thường đã xong ngay khi có mặt trên client) */
 function whenHydrated(
-  persist: { hasHydrated: () => boolean; onFinishHydration: (fn: () => void) => () => void },
+  persist: {
+    hasHydrated: () => boolean;
+    onFinishHydration: (fn: () => void) => () => void;
+  },
   fn: () => void,
 ) {
   if (persist.hasHydrated()) return fn();

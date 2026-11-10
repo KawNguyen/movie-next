@@ -2,22 +2,16 @@ import { cache } from "react";
 
 import MovieDetail from "@/components/movie-detail/movie-detail";
 import { MovieDetailResponse } from "@/types/movie-detail.types";
+import HeaderMovieDetail from "@/components/movie-detail/header-movie-detail";
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
-// Thông tin phim ít đổi => cache lâu hơn (5 phút).
-// Trang này không đọc searchParams nên Next có thể cache cả trang (ISR).
 export const revalidate = 300;
 
-// Trả về mảng rỗng: không build sẵn trang nào, nhưng mỗi slug được
-// render một lần ở request đầu tiên rồi cache lại (on-demand ISR).
 export function generateStaticParams() {
   return [];
 }
 
-// - Data Cache: dùng lại kết quả trong 5 phút
-// - React.cache: gộp Page + generateMetadata thành 1 lần gọi
-// - tags: revalidateTag(`movie:${slug}`) để làm mới một phim cụ thể
 const fetchMovieData = cache(
   async (slug: string): Promise<MovieDetailResponse | null> => {
     try {
@@ -40,7 +34,12 @@ const Page = async ({ params }: PageProps<"/phim/[slug]">) => {
 
   const movieData = await fetchMovieData(slug);
 
-  return <MovieDetail slug={slug} initialData={movieData} />;
+  return (
+    <>
+      <HeaderMovieDetail movieName={movieData?.movie?.name || "Tên Phim"} />
+      <MovieDetail slug={slug} initialData={movieData} />;
+    </>
+  );
 };
 
 export default Page;

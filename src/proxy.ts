@@ -16,10 +16,7 @@ export default async function proxy(req: NextRequest) {
   // Redirect to login if trying to access protected pages without auth
   if (isProtectedPage && !isAuthenticated) {
     const loginUrl = new URL("/login", req.url);
-    loginUrl.searchParams.set(
-      "redirect",
-      `${pathname}${req.nextUrl.search}`,
-    );
+    loginUrl.searchParams.set("redirect", `${pathname}${req.nextUrl.search}`);
 
     return NextResponse.redirect(loginUrl);
   }

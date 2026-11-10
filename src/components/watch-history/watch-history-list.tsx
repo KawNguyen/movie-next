@@ -93,8 +93,13 @@ export function WatchHistoryList() {
 
       <div className="grid gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {items.map((item) => {
-          const { movie, episode, needsNextEpisode, nextEpisodeId, finishedAll } =
-            item;
+          const {
+            movie,
+            episode,
+            needsNextEpisode,
+            nextEpisodeId,
+            finishedAll,
+          } = item;
           const href = getWatchUrl(item);
           const percent = needsNextEpisode
             ? 100
@@ -122,7 +127,9 @@ export function WatchHistoryList() {
               <Link href={href} className="block space-y-3">
                 <div className="relative aspect-video overflow-hidden rounded-xl bg-muted">
                   <Image
-                    src={movie.thumbUrl || movie.posterUrl || "/placeholder.svg"}
+                    src={
+                      movie.thumbUrl || movie.posterUrl || "/placeholder.svg"
+                    }
                     alt={movie.movieName}
                     fill
                     sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
