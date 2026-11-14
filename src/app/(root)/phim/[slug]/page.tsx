@@ -37,7 +37,7 @@ const Page = async ({ params }: PageProps<"/phim/[slug]">) => {
   return (
     <>
       <HeaderMovieDetail movieName={movieData?.movie?.name || "Tên Phim"} />
-      <MovieDetail slug={slug} initialData={movieData} />;
+      <MovieDetail slug={slug} initialData={movieData} />
     </>
   );
 };
